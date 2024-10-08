@@ -9,11 +9,11 @@ Frog game
 player/frog goal:
 collect 3 golden flies within 1 min
 
-normal flies are collected and add up in your final score once you collect the3 golden flies.
+normal flies are collected and add up in your final score once you collect the 3 golden flies.
 
 collect 'special' flies    
     -burst of flies mechanic
-    -> certain give frog advantage
+    -> certain special flies give frog advantage
         -> num of flies is doubled
         -> frog's size doubles
         -> turn a poisonous fly into a regular fly/or maybe on rare occasion a golden one
@@ -21,9 +21,16 @@ collect 'special' flies
 
     -> frog health bar?
 
+    -> to win you need the three
+        -> frog is full! visual
+
     -> frog death 
 
 assets:
--timer
+
+-timer + score tracker
+-frog health
+-special flies
+-golden flies
 -menu to start game
 -game over screen if your frog dies
