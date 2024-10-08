@@ -1,0 +1,29 @@
+
+game add on ideas
+
+-timed?
+-how many flies can you catch before missing /restart if you lose?
+--------------------
+Frog game
+
+player/frog goal:
+collect 3 golden flies within 1 min
+
+normal flies are collected and add up in your final score once you collect the3 golden flies.
+
+collect 'special' flies    
+    -burst of flies mechanic
+    -> certain give frog advantage
+        -> num of flies is doubled
+        -> frog's size doubles
+        -> turn a poisonous fly into a regular fly/or maybe on rare occasion a golden one
+    -> but be careful! within the swarms there are poisonous flies that make your health drop and you lose all your flies if accidentally eaten
+
+    -> frog health bar?
+
+    -> frog death 
+
+assets:
+-timer
+-menu to start game
+-game over screen if your frog dies
