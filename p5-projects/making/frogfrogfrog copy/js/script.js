@@ -16,6 +16,7 @@ function setup() {
     loadLevel(level);
 }
 
+// Load level function to set up new levels with frogs and flies
 function loadLevel(level) {
     hearts = 3;
     frogs = [];
@@ -38,6 +39,7 @@ function loadLevel(level) {
     }
 }
 
+// Main draw loop
 function draw() {
     if (gameState === "start") {
         displayStartScreen();
@@ -54,10 +56,11 @@ function displayStartScreen() {
     background(30);
     fill(255);
     textSize(32);
-    text("Fly Adventure!", width / 2 - 80, height / 2 - 40);
+    textAlign(CENTER);
+    text("Fly Adventure!", width / 2, height / 2 - 40);
     textSize(16);
-    text("Press any key to start", width / 2 - 60, height / 2);
-    text("Use arrow keys to move and avoid frogs!", width / 2 - 120, height / 2 + 40);
+    text("Press any key to start", width / 2, height / 2);
+    text("Use arrow keys to move and avoid frogs!", width / 2, height / 2 + 40);
 }
 
 function playGame() {
@@ -69,7 +72,7 @@ function playGame() {
     moveFly();
     drawFly();
 
-    // Handle frog movements and collisions
+    // Handle frog movements and display
     for (let frog of frogs) {
         moveFrog(frog);
         drawFrog(frog);
@@ -110,11 +113,89 @@ function playGame() {
     }
 }
 
-// Display functions, collision checks, movement controls, and other utilities follow...
+// Fly Object Creation and Drawing
+function createFly() {
+    return {
+        x: 50,
+        y: random(50, height - 50),
+        size: 10,
+        speed: 3,
+        moveSpeed: 2,
+        speedIncrease: 0.1 // gradual speed increase
+    };
+}
 
-// Example of displayHearts() and displayScore()
+function drawFly() {
+    if (captureEffect) {
+        fill(255, 0, 0, 150);
+        captureEffect = false;
+    } else {
+        fill(0);
+    }
+    ellipse(fly.x, fly.y, fly.size);
+}
+
+// Frog Object Creation and Drawing
+function createFrog(x, y) {
+    return {
+        x: x,
+        y: y,
+        tongueState: "idle",
+        tongueY: y,
+        tongueSpeed: 5,
+        size: 100
+    };
+}
+
+function drawFrog(frog) {
+    fill(0, 100, 0);
+    ellipse(frog.x, frog.y, frog.size);
+    if (frog.tongueState !== "idle") {
+        stroke(255, 0, 0);
+        line(frog.x, frog.y, frog.x, frog.tongueY);
+        noStroke();
+    }
+}
+
+// Other Fly Object Creation and Drawing
+function createOtherFly(x, y) {
+    return {
+        x: x,
+        y: y,
+        size: 10,
+        speed: random(1, 2)
+    };
+}
+
+function drawOtherFly(otherFly) {
+    fill(200, 100, 100);
+    ellipse(otherFly.x, otherFly.y, otherFly.size);
+}
+
+// Display Functions for Hearts and Score
 function displayHearts() {
-    // Code to display hearts as you defined previously
+    let fullHearts = Math.floor(hearts);
+    let halfHearts = (hearts % 1) >= 0.5 ? 1 : 0;
+    let emptyHearts = 3 - fullHearts - halfHearts;
+
+    let heartX = 10;
+    let heartY = 20;
+    let heartSize = 20;
+
+    fill(255, 0, 0);
+    for (let i = 0; i < fullHearts; i++) {
+        ellipse(heartX + i * (heartSize + 5), heartY, heartSize, heartSize);
+    }
+
+    if (halfHearts === 1) {
+        fill(255, 0, 0);
+        arc(heartX + fullHearts * (heartSize + 5), heartY, heartSize, heartSize, PI, 0);
+    }
+
+    fill(100);
+    for (let i = 0; i < emptyHearts; i++) {
+        ellipse(heartX + (fullHearts + halfHearts + i) * (heartSize + 5), heartY, heartSize, heartSize);
+    }
 }
 
 function displayScore() {
@@ -123,6 +204,23 @@ function displayScore() {
     text("Score: " + score, 10, 40);
 }
 
+// Movement and Position Reset Functions
+function moveFly() {
+    if (keyIsDown(LEFT_ARROW)) fly.x -= fly.moveSpeed;
+    if (keyIsDown(RIGHT_ARROW)) fly.x += fly.moveSpeed;
+    if (keyIsDown(UP_ARROW)) fly.y -= fly.moveSpeed;
+    if (keyIsDown(DOWN_ARROW)) fly.y += fly.moveSpeed;
+
+    fly.x = constrain(fly.x, 0, width);
+    fly.y = constrain(fly.y, 0, height);
+}
+
+function resetFlyPosition() {
+    fly.x = 50;
+    fly.y = random(50, height - 50);
+}
+
+// Key Events
 function keyPressed() {
     if (gameState === "start") {
         gameState = "playing";
