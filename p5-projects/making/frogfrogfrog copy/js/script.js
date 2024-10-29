@@ -54,11 +54,18 @@ function draw() {
 function displayStartScreen() {
     background(30);
     fill(255);
+    textSize(10);
+    textAlign(CENTER);
+    textWrap(WORD);
+    text("Honored fly your kingdom has been overrun by the Frogs who have killed your father king fly in cold blood, taken your comrades prisoner and stolen the crown rightfully yours", width / 6, height / 2 - 150);
+
     textSize(32);
+    textAlign(CENTER);
+    textWrap(WORD);
     text("Fly Adventure!", width / 2 - 80, height / 2 - 40);
     textSize(16);
     text("Press any key to start", width / 2 - 60, height / 2);
-    text("Use arrow keys to move and avoid frogs!", width / 2 - 120, height / 2 + 40);
+    text("Use arrow keys to move and avoid frogs!", width / 2 - 100, height / 2 + 40);
 }
 
 function playGame() {
@@ -91,7 +98,9 @@ function createFly() {
         size: 10,
         speed: 3,
         moveSpeed: 2,
-        speedIncrease: 0.1 // gradual speed increase
+        speedIncrease: 0.1, // gradual speed increase
+        buzziness: 4 //need to work on implementing buzziness
+
     };
 }
 
@@ -101,7 +110,7 @@ function createFrog(x, y) {
         x: x,
         y: y,
         tongueState: "idle",
-        tongueY: y,
+        tongueY: x * y,
         tongueSpeed: 5,
         size: 100
     };
@@ -149,9 +158,9 @@ function displayHearts() {
     let emptyHearts = 3 - fullHearts - halfHearts; // Starting with 3 max hearts
 
     // Set position to start drawing hearts
-    let heartX = 10;
+    let heartX = 20;
     let heartY = 20;
-    let heartSize = 20;
+    let heartSize = 30;
 
     // Display full hearts
     fill(255, 0, 0); // Red for full hearts
@@ -176,7 +185,15 @@ function displayHearts() {
 function displayScore() {
     fill(255);
     textSize(16);
-    text("Score: " + score, 10, 40);
+    text("Frogs evaded: " + score, 10, 60);
+}
+/**
+ * Moves the fly by changing its position randomly
+ * according to its buzziness
+ */
+function moveFly(fly) {
+    fly.x += random(-fly.buzziness, fly.buzziness);
+    fly.y += random(-fly.buzziness, fly.buzziness);
 }
 
 function moveFly() {
@@ -229,6 +246,7 @@ function drawFrog(frog) {
     ellipse(frog.x, frog.y, frog.size);
     if (frog.tongueState !== "idle") {
         stroke(255, 0, 0);
+        strokeWeight(10);
         line(frog.x, frog.y, frog.x, frog.tongueY);
         noStroke();
     }
