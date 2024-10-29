@@ -24,6 +24,43 @@ const ball = {
 }
 
 /**
+ * Starts the ball moving on mouse pressed
+ */
+function mousePressed() {
+    ball.velocity.x = ball.speed;
+}
+
+/**
+ * Stops the ball moving
+ */
+function mouseReleased() {
+    ball.velocity.x = 0;
+}
+
+/**
+ * Grows the ball when the mouse wheel is rolled
+ */
+function mouseWheel() {
+    ball.size += 0.5;
+}
+
+/**
+ * Resizes the ball
+ */
+function mouseWheel(event) {
+    // Add the number of pixels scrolled to the ball size
+    // Positive for scrolling down, negative for scrolling up
+    ball.size += event.delta;
+    // Constrain the size of the ball so it doesn't get silly
+    ball.size = constrain(ball.size, 10, width);
+}
+
+// mouseMoved() is called whenever the mouse moves
+// mouseDragged() is called whenever the mouse moves while the button is pressed down
+// mouseClicked() is called whenever the mouse is clicked(pressed and then released)
+// mouseDblClicked() is called whenever the mouse is clicked twice in a row quickly
+
+/**
  * Creates the canvas
  */
 function setup() {

@@ -3,11 +3,8 @@ let fly;
 let frogs = [];
 let otherFlies = [];
 let hearts = 3;
-let score = 0;
 let level = 1;
 const maxLevels = 3;
-let gameState = "start"; // Possible states: "start", "playing", "win", "lose"
-let captureEffect = false;
 
 // Fly Object
 function createFly() {
@@ -16,8 +13,7 @@ function createFly() {
         y: random(50, height - 50),
         size: 10,
         speed: 3,
-        moveSpeed: 2,
-        speedIncrease: 0.1 // gradual speed increase
+        moveSpeed: 2
     };
 }
 
@@ -29,7 +25,7 @@ function createFrog(x, y) {
         tongueState: "idle",
         tongueY: y,
         tongueSpeed: 5,
-        size: 100
+        size: 30
     };
 }
 
@@ -38,12 +34,11 @@ function createOtherFly(x, y) {
     return {
         x: x,
         y: y,
-        size: 10,
+        size: 5,
         speed: random(1, 2)
     };
 }
 
-//function to set up canvas and game objects
 function setup() {
     createCanvas(640, 480);
     fly = createFly();
@@ -73,112 +68,56 @@ function loadLevel(level) {
 }
 
 function draw() {
-    if (gameState === "start") {
-        displayStartScreen();
-    } else if (gameState === "playing") {
-        playGame();
-    } else if (gameState === "win") {
-        displayWinScreen();
-    } else if (gameState === "lose") {
-        displayLoseScreen();
-    }
-}
-
-function displayStartScreen() {
-    background(30);
-    fill(255);
-    textSize(32);
-    text("Fly Adventure!", width / 2 - 80, height / 2 - 40);
-    textSize(16);
-    text("Press any key to start", width / 2 - 60, height / 2);
-    text("Use arrow keys to move and avoid frogs!", width / 2 - 120, height / 2 + 40);
-}
-
-function playGame() {
     background(50, 150, 50); // Swamp background
-
     displayHearts();
-    displayScore();
-
     moveFly();
     drawFly();
 
+    // Frog behavior
     for (let frog of frogs) {
         moveFrog(frog);
         drawFrog(frog);
         if (checkCollision(fly, frog)) {
-            hearts -= 1; // Lose 1 full heart
-            score -= 5;
-            captureEffect = true;
+            hearts--;
+            resetFlyPosition();
             if (hearts <= 0) {
-                gameState = "lose";
+                displayLoseScreen();
             }
         }
     }
-}
 
-for (let otherFly of otherFlies) {
-    moveOtherFly(otherFly);
-    drawOtherFly(otherFly);
-    if (checkCollision(fly, otherFly)) {
-        hearts -= 0.5; // Lose half a heart
-        score -= 3;
-        if (hearts <= 0) {
-            gameState = "lose";
+    // Other fly behavior
+    for (let otherFly of otherFlies) {
+        moveOtherFly(otherFly);
+        drawOtherFly(otherFly);
+        if (checkCollision(fly, otherFly)) {
+            hearts -= 0.5;
+            if (hearts <= 0) {
+                displayLoseScreen();
+            }
         }
     }
 
-}
-
-if (fly.x > width) {
-    level++;
-    score += 20; // Bonus for reaching the end of each level
-    if (level <= maxLevels) {
-        loadLevel(level);
-        resetFlyPosition();
-        fly.speed += fly.speedIncrease; // Increase fly's speed for added challenge
-    } else {
-        gameState = "win";
+    // Check level completion
+    if (fly.x > width) {
+        level++;
+        if (level <= maxLevels) {
+            loadLevel(level);
+            resetFlyPosition();
+        } else {
+            displayWinScreen();
+        }
     }
 }
 
-
+// Display Hearts
 function displayHearts() {
-    let fullHearts = Math.floor(hearts);
-    let halfHearts = (hearts % 1) >= 0.5 ? 1 : 0;
-    let emptyHearts = 3 - fullHearts - halfHearts; // Starting with 3 max hearts
-
-    // Set position to start drawing hearts
-    let heartX = 10;
-    let heartY = 20;
-    let heartSize = 20;
-
-    // Display full hearts
-    fill(255, 0, 0); // Red for full hearts
-    for (let i = 0; i < fullHearts; i++) {
-        ellipse(heartX + i * (heartSize + 5), heartY, heartSize, heartSize);
-    }
-
-    // Display half heart if applicable
-    if (halfHearts === 1) {
-        fill(255, 0, 0); // Red for half heart
-        arc(heartX + fullHearts * (heartSize + 5), heartY, heartSize, heartSize, PI, 0); // Half-heart arc
-    }
-
-    // Display empty hearts
-    fill(100); // Gray for empty hearts
-    for (let i = 0; i < emptyHearts; i++) {
-        ellipse(heartX + (fullHearts + halfHearts + i) * (heartSize + 5), heartY, heartSize, heartSize);
-    }
-}
-
-
-function displayScore() {
     fill(255);
     textSize(16);
-    text("Score: " + score, 10, 40);
+    text("Hearts: " + hearts, 10, 20);
 }
 
+// Fly Movement with Keyboard Controls
 function moveFly() {
     if (keyIsDown(LEFT_ARROW)) {
         fly.x -= fly.moveSpeed;
@@ -193,17 +132,13 @@ function moveFly() {
         fly.y += fly.moveSpeed;
     }
 
+    // Keep fly within screen bounds
     fly.x = constrain(fly.x, 0, width);
     fly.y = constrain(fly.y, 0, height);
 }
 
 function drawFly() {
-    if (captureEffect) {
-        fill(255, 0, 0, 150);
-        captureEffect = false;
-    } else {
-        fill(0);
-    }
+    fill(0);
     ellipse(fly.x, fly.y, fly.size);
 }
 
@@ -212,8 +147,9 @@ function resetFlyPosition() {
     fly.y = random(50, height - 50);
 }
 
+// Frog Movement and Tongue Action
 function moveFrog(frog) {
-    frog.x += random(-1, 1);
+    frog.x += random(-1, 1); // Slight movement
     frog.tongueY = frog.tongueState === "outbound" ? frog.tongueY - frog.tongueSpeed : frog.y;
     if (frog.tongueState === "idle" && random(100) > 98) {
         frog.tongueState = "outbound";
@@ -234,10 +170,11 @@ function drawFrog(frog) {
     }
 }
 
+// Other Flies Movement
 function moveOtherFly(otherFly) {
     otherFly.x += otherFly.speed;
     if (otherFly.x > width || otherFly.x < 0) {
-        otherFly.speed *= -1;
+        otherFly.speed *= -1; // Bounce back
     }
 }
 
@@ -246,16 +183,19 @@ function drawOtherFly(otherFly) {
     ellipse(otherFly.x, otherFly.y, otherFly.size);
 }
 
+// Collision Detection
 function checkCollision(fly, obj) {
     let d = dist(fly.x, fly.y, obj.x, obj.y);
     return d < (fly.size / 2 + obj.size / 2);
 }
 
+// Win/Loss Screens
 function displayWinScreen() {
     background(0, 200, 0);
     fill(255);
     textSize(32);
     text("You Win!", width / 2 - 80, height / 2);
+    noLoop();
 }
 
 function displayLoseScreen() {
@@ -263,10 +203,14 @@ function displayLoseScreen() {
     fill(255);
     textSize(32);
     text("Game Over!", width / 2 - 100, height / 2);
+    noLoop();
 }
 
-function keyPressed() {
-    if (gameState === "start") {
-        gameState = "playing";
+function mousePressed() {
+    for (let frog of frogs) {
+        if (frog.tongueState === "idle") {
+            frog.tongueState = "outbound";
+        }
     }
 }
+
