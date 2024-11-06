@@ -17,26 +17,32 @@ function setup() {
     loadLevel(level);
 }
 
-function loadLevel(level) {
-    hearts = 3;
-    frogs = [];
-    otherFlies = [];
-    let numFrogs = level + 1;
-    let numOtherFlies = level * 2;
+let opacity = 0; // Starting opacity
 
-    // Create frogs with increasing number per level
-    for (let i = 0; i < numFrogs; i++) {
-        let frogX = random(100, width - 100);
-        let frogY = random(100, height - 100);
-        frogs.push(createFrog(frogX, frogY));
-    }
+function displayTitleScreen() {
+    background(0);
+    fill(255, 255, 255, opacity);
+    textSize(32);
+    textAlign(CENTER, CENTER);
+    text("The Fly's Vengeance!", width / 2, height / 2 - 40);
+    textSize(16);
+    text("Press any key to start", width / 2, height / 2 + 20);
 
-    // Create other flies with increasing number per level
-    for (let i = 0; i < numOtherFlies; i++) {
-        let flyX = random(100, width - 100);
-        let flyY = random(100, height - 100);
-        otherFlies.push(createOtherFly(flyX, flyY));
-    }
+    if (opacity < 255) opacity += 2; // Adjust speed as needed
+}
+let scrollPosition = 0;
+let textOpacity = 0;
+
+function displayCutScene1() {
+    background(30);
+    image(swamp1, -scrollPosition, 0); // Scroll the background
+    scrollPosition += 1; // Adjust for scroll speed
+    fill(255, 255, 255, textOpacity);
+    textSize(16);
+    textAlign(CENTER);
+    text("Honored fly your kingdom has been overrun by the Frogs who have killed your father king fly in cold blood, taken your comrades prisoner and stolen the crown rightfully yours", width / 2, height / 2 - 40);
+
+    if (textOpacity < 255) textOpacity += 3; // Fade in text
 }
 
 function draw() {
@@ -51,81 +57,6 @@ function draw() {
     }
 }
 
-function displayStartScreen() {
-    background(30);
-    fill(255);
-    textSize(10);
-    textAlign(CENTER);
-    textWrap(WORD);
-    text("Honored fly your kingdom has been overrun by the Frogs who have killed your father king fly in cold blood, taken your comrades prisoner and stolen the crown rightfully yours", width / 6, height / 2 - 150);
-
-    textSize(32);
-    textAlign(CENTER);
-    textWrap(WORD);
-    text("Fly Adventure!", width / 2 - 80, height / 2 - 40);
-    textSize(16);
-    text("Press any key to start", width / 2 - 60, height / 2);
-    text("Use arrow keys to move and avoid frogs!", width / 2 - 100, height / 2 + 40);
-}
-
-function playGame() {
-    background(50, 150, 50); // Swamp background
-
-    displayHearts();
-    displayScore();
-
-    moveFly();
-    drawFly();
-
-    for (let frog of frogs) {
-        moveFrog(frog);
-        drawFrog(frog);
-        if (checkCollision(fly, frog)) {
-            hearts -= 1; // Lose 1 full heart
-            score -= 5;
-            captureEffect = true;
-            if (hearts <= 0) {
-                gameState = "lose";
-            }
-        }
-    }
-}
-// Fly Object
-function createFly() {
-    return {
-        x: 50,
-        y: random(50, height - 50),
-        size: 10,
-        speed: 3,
-        moveSpeed: 2,
-        speedIncrease: 0.1, // gradual speed increase
-        buzziness: 4 //need to work on implementing buzziness
-
-    };
-}
-
-// Frog Object
-function createFrog(x, y) {
-    return {
-        x: x,
-        y: y,
-        tongueState: "idle",
-        tongueY: x * y,
-        tongueSpeed: 5,
-        size: 100
-    };
-}
-
-// Other Fly Object
-function createOtherFly(x, y) {
-    return {
-        x: x,
-        y: y,
-        size: 10,
-        speed: random(1, 2)
-    };
-}
-
 for (let otherFly of otherFlies) {
     moveOtherFly(otherFly);
     drawOtherFly(otherFly);
@@ -138,49 +69,6 @@ for (let otherFly of otherFlies) {
     }
 
 }
-
-if (fly.x > width) {
-    level++;
-    score += 20; // Bonus for reaching the end of each level
-    if (level <= maxLevels) {
-        loadLevel(level);
-        resetFlyPosition();
-        fly.speed += fly.speedIncrease; // Increase fly's speed for added challenge
-    } else {
-        gameState = "win";
-    }
-}
-
-
-function displayHearts() {
-    let fullHearts = Math.floor(hearts);
-    let halfHearts = (hearts % 1) >= 0.5 ? 1 : 0;
-    let emptyHearts = 3 - fullHearts - halfHearts; // Starting with 3 max hearts
-
-    // Set position to start drawing hearts
-    let heartX = 20;
-    let heartY = 20;
-    let heartSize = 30;
-
-    // Display full hearts
-    fill(255, 0, 0); // Red for full hearts
-    for (let i = 0; i < fullHearts; i++) {
-        ellipse(heartX + i * (heartSize + 5), heartY, heartSize, heartSize);
-    }
-
-    // Display half heart if applicable
-    if (halfHearts === 1) {
-        fill(255, 0, 0); // Red for half heart
-        arc(heartX + fullHearts * (heartSize + 5), heartY, heartSize, heartSize, PI, 0); // Half-heart arc
-    }
-
-    // Display empty hearts
-    fill(100); // Gray for empty hearts
-    for (let i = 0; i < emptyHearts; i++) {
-        ellipse(heartX + (fullHearts + halfHearts + i) * (heartSize + 5), heartY, heartSize, heartSize);
-    }
-}
-
 
 function displayScore() {
     fill(255);
@@ -214,21 +102,6 @@ function moveFly() {
     fly.y = constrain(fly.y, 0, height);
 }
 
-function drawFly() {
-    if (captureEffect) {
-        fill(255, 0, 0, 150);
-        captureEffect = false;
-    } else {
-        fill(0);
-    }
-    ellipse(fly.x, fly.y, fly.size);
-}
-
-function resetFlyPosition() {
-    fly.x = 50;
-    fly.y = random(50, height - 50);
-}
-
 function moveFrog(frog) {
     frog.x += random(-1, 1);
     frog.tongueY = frog.tongueState === "outbound" ? frog.tongueY - frog.tongueSpeed : frog.y;
@@ -238,17 +111,6 @@ function moveFrog(frog) {
         frog.tongueState = "inbound";
     } else if (frog.tongueState === "inbound" && frog.tongueY >= frog.y) {
         frog.tongueState = "idle";
-    }
-}
-
-function drawFrog(frog) {
-    fill(0, 100, 0);
-    ellipse(frog.x, frog.y, frog.size);
-    if (frog.tongueState !== "idle") {
-        stroke(255, 0, 0);
-        strokeWeight(10);
-        line(frog.x, frog.y, frog.x, frog.tongueY);
-        noStroke();
     }
 }
 
@@ -286,5 +148,175 @@ function displayLoseScreen() {
 function keyPressed() {
     if (gameState === "start") {
         gameState = "playing";
+    }
+}
+let boltCharge = 0;
+let boltReady = false;
+
+function keyPressed() {
+    if (key === 'Shift') boltCharge = 0; // Start charging when shift is pressed
+}
+
+function keyReleased() {
+    if (key === 'Shift' && boltReady) {
+        fireElectricBolt();
+        boltReady = false;
+    }
+}
+
+function playGame() {
+    if (keyIsDown(SHIFT) && boltCharge < 100) {
+        boltCharge += 1; // Charge bolt
+        if (boltCharge >= 100) boltReady = true; // Bolt is ready after full charge
+    }
+}
+
+function fireElectricBolt() {
+    // Define what happens when bolt is fired (e.g., damage frog king)
+}
+
+let shieldCooldown = 0;
+let defenseMode = false;
+
+function playGame() {
+    if (keyIsDown(32) && shieldCooldown <= 0) {
+        defenseMode = true;
+        shieldCooldown = 180; // 3 seconds cooldown (approx. 60 fps)
+    } else {
+        defenseMode = false;
+        shieldCooldown--;
+    }
+}
+
+let notificationText = "";
+let notificationTimer = 0;
+
+function displayNotification(message) {
+    fill(255, 0, 0);
+    textSize(16);
+    text(message, width / 2, height - 50);
+}
+
+function playGame() {
+    if (defenseMode && frogHit) {
+        notificationText = "Stunning!";
+        notificationTimer = 60;
+    } else if (playerHit) {
+        notificationText = "Ouch!";
+        notificationTimer = 60;
+    }
+    if (notificationTimer > 0) {
+        displayNotification(notificationText);
+        notificationTimer--;
+    }
+}
+
+function moveFrog(frog) {
+    if (dist(frog.x, frog.y, frog.targetLilyPad.x, frog.targetLilyPad.y) < 5) {
+        frog.targetLilyPad = random(lilyPads); // Choose new lily pad target
+    } else {
+        frog.x += (frog.targetLilyPad.x - frog.x) * 0.05; // Adjust speed as needed
+        frog.y += (frog.targetLilyPad.y - frog.y) * 0.05;
+    }
+}
+
+function loadLevel(level) {
+    if (level === 1) {
+        frogs = [createFrog(100, 100)];
+        lilyPads = [createLilyPad(150, 150)];
+        backgroundImage = swamp1;
+    } else if (level === 2) {
+        frogs = [createFrog(100, 100), createFrog(200, 200)];
+        lilyPads = [createLilyPad(150, 150), createLilyPad(250, 250)];
+        backgroundImage = swamp2;
+    }
+}
+
+
+function fadeInText(text, x, y, alpha) {
+    fill(255, 255, 255, alpha);
+    textSize(16);
+    text(text, x, y);
+}
+
+function displayNotification(text) {
+    fill(255, 100, 100);
+    textSize(16);
+    text(text, width / 2, height - 20);
+}
+
+function displayHearts() {
+    for (let i = 0; i < fly.hearts; i++) {
+        image(fullHeart, 20 + i * 20, 20, 16, 16); // Full hearts
+    }
+    // Logic to draw half-hearts
+    //make heart image 1/2 opacity
+}
+
+function moveFrog(frog) {
+    if (frameCount % 100 === 0) {
+        frog.x = random(lilyPads).x;  // Move to random lily pad
+        frog.y = random(lilyPads).y;
+    }
+}
+
+let boltCharged = 0;  // Bolt charging status
+
+function chargeElectricBolt() {
+    if (keyIsDown(SHIFT)) {
+        boltCharged += 1;
+        if (boltCharged >= 100) {
+            boltCharged = 100;  // Fully charged
+            displayNotification("Bolt Charged!");
+        }
+    } else {
+        boltCharged = 0;  // Reset if not charging
+    }
+}
+
+function updateHealth() {
+    if (fly.hearts <= 0) {
+        gameState = "lose";
+        displayGameOverScreen();
+    } else if (fly.hearts === 1) {
+        displayNotification("Warning: Health Critically Low!");
+    }
+}
+
+
+function displayCutScene1() {
+    scrollPosition += 1;  // Slow scroll effect
+    image(background, scrollPosition, 0);
+
+    if (scrollPosition > width) {
+        scrollPosition = 0;
+    }
+    fill(255);
+    text("Honored fly, your kingdom has been overrun...", 50, height - 50);
+}
+
+function mousePressed() {
+    if (mouseButton === RIGHT && keyIsDown(32)) {
+        for (let capturedFly of capturedFlies) {
+            if (capturedFly.locked && dist(mouseX, mouseY, capturedFly.x, capturedFly.y) < 20) {
+                capturedFly.locked = false;
+                fliesFreed++;
+            }
+        }
+    }
+}
+
+function displayGameOverScreen() {
+    background(200, 0, 0);
+    textSize(32);
+    text("Game Over!", width / 2, height / 2);
+    textSize(16);
+    text(`Flies Freed: ${fliesFreed}`, width / 2, height / 2 + 40);
+    text("Press any key to restart", width / 2, height / 2 + 80);
+}
+
+function keyPressed() {
+    if (gameState === "win" || gameState === "lose") {
+        resetGame(); // Restart game variables
     }
 }
