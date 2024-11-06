@@ -11,27 +11,54 @@ let hearts = 3;
 let fliesFreed = 0;
 let gameState = "start";  // Possible states: "start", "playing", "cutScene", "win", "lose"
 let level = 1;
-let defenseCircuit = false;
+let electric=false; 
+<!-- if ((spaceBarKey && keyPressHold)==true) {
+    electric=true;
+} else {
 
-// Image Assets
-let flyImage, frogImage, kingFrogImage, lilyPadImage, heartImage, crownImage, laserImage;
+electric=false;
+} -->
+
+// Image Assets I made
+let fly, flyStun, flyNearDeath, deadFly, frog, frogTongue, frogStun, frogKing, frogKingTongue, frogKingStun, frogKingDead, lilyPadv1, lilyPadv2, full-heart, empty-heart, crown, electricBolt, swamp1, swamp2;
 
 // Load images
 function preload() {
-  flyImage = loadImage("assets/fly.png");
-  frogImage = loadImage("assets/frog.png");
-  kingFrogImage = loadImage("assets/kingFrog.png");
-  lilyPadImage = loadImage("assets/lilyPad.png");
-  heartImage = loadImage("assets/heart.png");
-  crownImage = loadImage("assets/crown.png");
-  laserImage = loadImage("assets/laser.png");
+    //loading fly assets
+fly= loadImage("assets/images/fly.png"); //
+flyStun= loadImage("assets/images/fly-stun.png"); //
+flyNearDeath= loadImage("assets/images/fly-hit.png");//
+deadFly= loadImage("assets/images/fly-dead.png");//
+
+ //loading frog assets
+frog = loadImage("assets/images/frog.png");//
+frogTongue = loadImage("assets/images/frog.png");
+frogStun = loadImage("assets/images/frog-stunned.png"); 
+frogKing = loadImage("assets/images/frog-king.png");//
+frogKingTongue = loadImage("assets/images/frog-king-stunned.png");
+frogKingStun  = loadImage("assets/images/frog-king-stunned.png");//
+frogKingDead = loadImage("assets/images/frog-king-dead.png");//
+
+ //loading other game assets
+lilyPadv1 = loadImage("assets/images/lilypad-v1.png");//
+lilyPadv2 = loadImage("assets/images/lilypad-v2.png");//
+full-heart = loadImage("assets/images/full-hearts.png");//
+empty-heart = loadImage("assets/images/empty-hearts.png");//
+crown = loadImage("assets/images/crown.png");//
+electricBolt = loadImage("assets/images/crown.png");
+
+//backgrounds
+swamp1 = loadImage("assets/images/swamp1.png"); //
+swamp2 = loadImage("assets/images/swamp2.png");//
 }
 
 // Setup function to initialize canvas and objects
 function setup() {
   createCanvas(640, 480);
   fly = createFly();
-  loadLevel(level);
+  //loadLevel(level);
+
+
 }
 
 // !!! Title Screen and Cutscene Display
@@ -75,9 +102,9 @@ function keyPressed() {
   }
 }
 
-// !!! Fly and Frog Objects
+//Game Objects
 
-// Fly Object with additional properties for defense mode
+// Fly Object
 function createFly() {
   return {
     x: 50,
@@ -85,12 +112,17 @@ function createFly() {
     size: 20,
     moveSpeed: 2,
     hearts: 3,
-    defenseMode: false,
-    stunned: false
+    electric: false;
   };
 }
 
-// Frog Object with a stunned state
+//sub group fly objects: captured flies
+function createCapturedFlies(x, y) {
+  return { x: x, y: y, locked: true };
+}
+
+
+// Frog Object 
 function createFrog(x, y) {
   return {
     x: x,
@@ -101,22 +133,31 @@ function createFrog(x, y) {
   };
 }
 
-// Lily Pad and Captured Flies
+//sub group frog object: king frog has more properties than frog
+function createFrog(x, y) {
+  return {
+    x: x,
+    y: y,
+    size: 100,
+    stunned: false,
+    stunTimer: 0
+  };
+}
+
+// lily pad objects
+//logic: 2 types of lily img choose either at random
+ let x = random(0, 100);
 function createLilyPad(x, y) {
   return { x: x, y: y, size: 40 };
 }
 
-function createCapturedFlies(x, y) {
-  return { x: x, y: y, locked: true };
-}
 
-//!!! Game Play Logic: Adding Defense Circuit and Stunned Effects
+//!!! Game Play Logic
 
 function playGame() {
-  // Change background for each swamp level
-  if (level === 1) background(100, 180, 80);
-  if (level === 2) background(80, 150, 80);
-  if (level === 3) background(60, 120, 70);
+  // Change placements of frogs and lilypads for each swamp level
+  if (level === 1) = loadlvl1;
+  if (level === 2) = loadlvl2;
 
   displayHearts();
   displayScore();
