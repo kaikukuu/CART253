@@ -1,0 +1,221 @@
+
+let img;
+
+// Load the image.
+function preload() {
+  img = loadImage('/assets/moonwalk.jpg');
+}
+
+function setup() {
+  createCanvas(100, 100);
+
+  background(50);
+
+  // Draw the image and scale it to fit within the canvas.
+  image(img, 0, 0, width, height, 0, 0, img.width, img.height, CONTAIN);
+
+  describe('An image of an astronaut on the moon. The top and bottom borders of the image are dark gray.');
+}
+
+//need to rename images
+//- next check og assets folder,
+// add renamed imgs to assets
+
+//outline for full game
+
+//  !!!Core Game Structure and Variables
+
+// Game Variables
+let fly;
+let frogs = [];
+let lilyPads = [];
+let capturedFlies = [];
+let hearts = 3;
+let fliesFreed = 0;
+let gameState = "start";  // Possible states: "start", "playing", "cutScene", "win", "lose"
+let level = 1;
+let defenseCircuit = false;
+
+// Image Assets
+let flyImage, frogImage, kingFrogImage, lilyPadImage, heartImage, crownImage, laserImage;
+
+// Load images
+function preload() {
+  flyImage = loadImage("assets/fly.png");
+  frogImage = loadImage("assets/frog.png");
+  kingFrogImage = loadImage("assets/kingFrog.png");
+  lilyPadImage = loadImage("assets/lilyPad.png");
+  heartImage = loadImage("assets/heart.png");
+  crownImage = loadImage("assets/crown.png");
+  laserImage = loadImage("assets/laser.png");
+}
+
+// Setup function to initialize canvas and objects
+function setup() {
+  createCanvas(640, 480);
+  fly = createFly();
+  loadLevel(level);
+}
+
+// !!! Title Screen and Cutscene Display
+
+function draw() {
+  if (gameState === "start") {
+    displayTitleScreen();
+  } else if (gameState === "cutScene") {
+    displayCutScene1();
+  } else if (gameState === "playing") {
+    playGame();
+  } else if (gameState === "win") {
+    displayWinScreen();
+  } else if (gameState === "lose") {
+    displayGameOverScreen();
+  }
+}
+
+function displayTitleScreen() {
+  background(0);
+  fill(255);
+  textSize(32);
+  text("The Fly's Vengeance!", width / 2 - 100, height / 2 - 40);
+  textSize(16);
+  text("Press any key to start", width / 2 - 60, height / 2);
+}
+
+function displayCutScene1() {
+  background(30);
+  fill(255);
+  textSize(16);
+  text("Honored fly, your kingdom has been overrun by the Frogs who...", width / 2 - 200, height / 2 - 40);
+  text("Press any key to start your journey", width / 2 - 80, height / 2 + 40);
+}
+
+function keyPressed() {
+  if (gameState === "start") {
+    gameState = "cutScene";
+  } else if (gameState === "cutScene") {
+    gameState = "playing";
+  }
+}
+
+// !!! Fly and Frog Objects
+
+// Fly Object with additional properties for defense mode
+function createFly() {
+  return {
+    x: 50,
+    y: height / 2,
+    size: 20,
+    moveSpeed: 2,
+    hearts: 3,
+    defenseMode: false,
+    stunned: false
+  };
+}
+
+// Frog Object with a stunned state
+function createFrog(x, y) {
+  return {
+    x: x,
+    y: y,
+    size: 100,
+    stunned: false,
+    stunTimer: 0
+  };
+}
+
+// Lily Pad and Captured Flies
+function createLilyPad(x, y) {
+  return { x: x, y: y, size: 40 };
+}
+
+function createCapturedFlies(x, y) {
+  return { x: x, y: y, locked: true };
+}
+
+//!!! Game Play Logic: Adding Defense Circuit and Stunned Effects
+
+function playGame() {
+  // Change background for each swamp level
+  if (level === 1) background(100, 180, 80);
+  if (level === 2) background(80, 150, 80);
+  if (level === 3) background(60, 120, 70);
+
+  displayHearts();
+  displayScore();
+
+  if (keyIsDown(32)) { // Space bar for defense mode
+    fly.defenseMode = true;
+  } else {
+    fly.defenseMode = false;
+  }
+
+  moveFly();
+  drawFly();
+
+  for (let frog of frogs) {
+    if (checkCollision(fly, frog)) {
+      if (fly.defenseMode && !frog.stunned) {
+        frog.stunned = true;
+        frog.stunTimer = frameCount;
+      } else if (!fly.defenseMode) {
+        fly.hearts -= 0.5;
+        if (fly.hearts <= 0) gameState = "lose";
+      }
+    }
+    moveFrog(frog);
+    drawFrog(frog);
+  }
+
+  for (let lilyPad of lilyPads) drawLilyPad(lilyPad);
+  for (let capturedFly of capturedFlies) {
+    if (checkCollision(fly, capturedFly) && capturedFly.locked) {
+      fliesFreed++;
+      capturedFly.locked = false;
+    }
+    drawCapturedFly(capturedFly);
+  }
+}
+
+function drawFly() {
+  image(fly.defenseMode ? laserImage : flyImage, fly.x, fly.y, fly.size, fly.size);
+}
+
+function drawFrog(frog) {
+  if (frog.stunned && frameCount - frog.stunTimer < 60) {
+    tint(150);  // Grayscale
+  } else {
+    noTint();
+    frog.stunned = false;
+  }
+  image(frogImage, frog.x, frog.y, frog.size, frog.size);
+}
+
+function drawLilyPad(lilyPad) {
+  image(lilyPadImage, lilyPad.x, lilyPad.y, lilyPad.size, lilyPad.size);
+}
+
+function drawCapturedFly(capturedFly) {
+  image(flyImage, capturedFly.x, capturedFly.y, capturedFly.size, capturedFly.size);
+}
+
+// !!! Game Over and Win Screens
+
+function displayGameOverScreen() {
+  background(200, 0, 0);
+  fill(255);
+  textSize(32);
+  text("Game Over!", width / 2 - 100, height / 2);
+  textSize(16);
+  text("Flies Freed: " + fliesFreed, width / 2 - 60, height / 2 + 40);
+  text("Press any key to restart", width / 2 - 80, height / 2 + 80);
+}
+
+function displayWinScreen() {
+  background(0, 200, 0);
+  fill(255);
+  textSize(32);
+  text("You Win!", width / 2 - 80, height / 2);
+  textSize(16);
+  text("Congratulations, you've freed the flies!", width / 2 - 140, height / 2 + 40);
+}
