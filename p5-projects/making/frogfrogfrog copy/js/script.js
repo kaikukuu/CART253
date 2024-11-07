@@ -1,26 +1,63 @@
+/**
+ * Mod Jam: The Fly's Vengeance
+ * Kaisa Catt
+ * 
+ * A game of escaping frogs and reclaiming the king fly's crown.
+ * 
+ * Instructions:
+ * - 
+ 
+ * Made with p5
+ * https://p5js.org/
+ */
+
+"use strict";
+
 // Game Variables
 let fly;
 let frogs = [];
-let otherFlies = [];
 let hearts = 3;
 let score = 0;
 let level = 1;
-const maxLevels = 3;
 let gameState = "start"; // Possible states: "start", "playing", "win", "lose"
 let opacity = 0; // Starting opacity for title screen
 let scrollPosition = 0;
 let textOpacity = 0;
-let boltCharge = 0;
-let boltReady = false;
 let shieldCooldown = 0;
 let notificationText = "";
 let notificationTimer = 0;
-let fliesFreed = 0; // For tracking freed flies
 let backgroundOffset = 0;  // To scroll background
 //Variables for Reset Period
 let resetTimer = 0;
 const resetDuration = 30;  // Frames for reset period after collision
+let lilyPads = [];
 
+
+// Image Assets I made
+let flyImage, flyStun, flyNearDeath, deadFly, frogImage, frogTongue, lilyPadv1, lilyPadv2, fullHeartImage, emptyHeartImage, crown, swamp1, swamp2;
+
+// Load images
+function preload() {
+    //loading fly assets
+    fly = loadImage("assets/images/fly.png"); //
+    flyStun = loadImage("assets/images/fly-stun.png"); //
+    flyNearDeath = loadImage("assets/images/fly-hit.png");//
+    deadFly = loadImage("assets/images/fly-dead.png");//
+
+    //loading frog assets
+    frogImage = loadImage("assets/images/frog.png");//
+
+    //loading other game assets
+    lilyPadv1 = loadImage("assets/images/lilypad-v1.png");//
+    lilyPadv2 = loadImage("assets/images/lilypad-v2.png");//
+    fullHeartImage = loadImage("assets/images/full-hearts.png");//
+    emptyHeartImage = loadImage("assets/images/empty-hearts.png");//
+    crown = loadImage("assets/images/crown.png");//
+
+    //backgrounds
+    swamp1 = loadImage("assets/images/swamp1.png"); //
+    swamp2 = loadImage("assets/images/swamp2.png");//
+}
 
 // Setup canvas and initial game objects
 function setup() {
@@ -63,10 +100,8 @@ function displayPlayerGuide() {
     textSize(14);
     textAlign(CENTER);
     text("Player Guide", width / 2, height / 2 + 50);
-    text("Electric Flash: Charge by holding Shift. You have one chance to release at the Frog King after successful charge.", width / 2, height / 2 + 80);
-    text("Note: While charging, your shield will be down. Proceed with caution!", width / 2, height / 2 + 100);
-    text("Electric Shield: Hold Space to activate and stun nearby frogs.", width / 2, height / 2 + 120);
-    text("Unlock Prisoner Flies: Hold Space and click on the lock to free flies.", width / 2, height / 2 + 140);
+    text("Electric Shield: Hold Space to activate and stun frogs in case you are hit by their tongue.", width / 2, height / 2 + 120);
+    text("Make it to the other end of the frog swamp and reclaim your crown without running into frogs or getting eaten.", width / 2, height / 2 + 80);
 }
 
 // Main draw loop based on game state
@@ -74,6 +109,7 @@ function draw() {
     if (gameState === "start") {
         displayTitleScreen();
     } else if (gameState === "playing") {
+        updateBackground(); // Continuously update background
         playGame();
     } else if (gameState === "win") {
         displayWinScreen();
@@ -86,18 +122,12 @@ function draw() {
         resetTimer--;  // Decrease reset timer each frame
     }
 
-    // Update fly state based on health
-    updateFlyState(fly);
-
-    // Update fly movement and apply health effects
-    moveFly(fly);
-    applyHealthEffects(fly);
-
-    // Display health (hearts) at the top of the screen
-    displayHearts(fly);
-
-    // Draw the fly (normal, stunned, or near-death)
+    // Draw the fly (normal, stunning shield, or near-death)
     drawFly(fly);
+    updateFlyState(fly);// Update fly state based on health
+    moveFly(fly);// Update fly movement and apply health effects
+    applyHealthEffects(fly);// Display health (hearts) at the top of the screen
+    displayHearts(fly);
 
     // Check for collisions with frogs
     for (let frog of frogs) {
@@ -119,7 +149,7 @@ function draw() {
 
 // Display notification text on screen
 function displayNotification(message) {
-    if (message !== "") {
+    if (message !== "") { //if message is not empty/clearing
         fill(255, 100, 100);
         textSize(16);
         text(message, width / 2, height - 40);
@@ -145,18 +175,66 @@ function drawLilyPad(lilyPad) {
     image(lilyPad.image, lilyPad.x, lilyPad.y, lilyPad.size, lilyPad.size);
 }
 
-function createFrog(x, y, isKing = false) {
+/**
+ * Handles moving the tongue based on its state
+ */
+function moveTongue() {
+    // Tongue matches the frog's x
+    frog.tongue.x = frog.body.x;
+    // If the tongue is idle, it doesn't do anything
+    if (frog.tongue.state === "nothing") {
+        // Do nothing
+    }
+    // If the tongue is outbound, it moves up
+    else if (frog.tongue.state === "outbound") {
+        frog.tongue.y += -frog.tongue.speed;
+        // The tongue bounces back if it hits the top
+        if (frog.tongue.y <= 0) {
+            frog.tongue.state = "inbound";
+        }
+    }
+    // If the tongue is inbound, it moves down
+    else if (frog.tongue.state === "inbound") {
+        frog.tongue.y += frog.tongue.speed;
+        // The tongue stops if it hits the bottom
+        if (frog.tongue.y >= height) {
+            frog.tongue.state = "idle";
+        }
+    }
+}
+
+/**
+ * Handles the tongue overlapping the fly
+ */
+function checkTongueFlyOverlap() {
+    // Get distance from tongue to fly
+    const d = dist(frog.tongue.x, frog.tongue.y, fly.x, fly.y);
+    if (dist(fly.x, fly.y, frog.tongue.x, frog.tongue.y) < fly.size / 2) {
+        handleTongueCollision(fly, frog);
+    }
+}
+
+function createFrog(x, y) {
     return {
-        x: x,
-        y: y,
-        size: 100,
-        stunned: false,
-        stunTimer: 0,
-        isKing: isKing,
-        tongueState: "idle",  // Add this to track the tongue's state
-        tongueY: y,  // Position for tongue
-        tongueSpeed: 5,  // Speed for tongue movement
-    };
+        body: {
+            x: x,
+            y: y,
+            size: 100,
+            stunned: false,
+            stunTimer: 0,
+        },
+
+        tongue: {
+            // The frog's tongue has a position, size, speed, and state
+            x: x,
+            y: y,
+            size: 20,
+            speed: 10,
+            // Determines how the tongue moves each frame
+            state: "idle"// State can be: idle, outbound, inbound
+        }
+
+    }
 }
 
 
@@ -166,30 +244,35 @@ function drawFrog(frog) {
     } else {
         noTint();
     }
+    // Draw the tongue tip
+    push();
+    fill("#ff0000");
+    noStroke();
+    ellipse(frog.tongue.x, frog.tongue.y, frog.tongue.size);
+    pop();
 
-    if (frog.isKing) {
-        image(frogKing, frog.x, frog.y, frog.size, frog.size);  // Display frog king image
-        // Draw tongue for frog king
-        image(frogKingTongue, frog.x + frog.size / 2, frog.y, frog.size / 2, frog.size / 2);
-    } else {
-        image(frogImage, frog.x, frog.y, frog.size, frog.size);  // Regular frog
-        // Draw tongue dynamically for frogs
-        image(frogTongue, frog.x + frog.size / 2, frog.y, frog.size / 2, frog.size / 2);
-    }
+    // Draw the rest of the tongue
+    push();
+    stroke("#ff0000");
+    strokeWeight(frog.tongue.size);
+    line(frog.tongue.x, frog.tongue.y, frog.body.x, frog.body.y);
+    pop();
+    //Draw frog img
+    //CHECK POSITIONING
+    image(frogImage, frog.body.x, frog.body.y, frog.body.size, frog.body.size); // Regular frog
 
     frog.stunned = false;  // Reset stunned state after drawing
 }
 
-function createFly(isPlayer = false) {
+function createFly() {
     return {
         x: 50,
         y: height / 2,
         size: 20,
         moveSpeed: 2,
         hearts: 3,
-        electric: false,
-        state: isPlayer ? 'normal' 
-    };
+        electric: false
+    }
 }
 
 function updateFlyState(fly) {
@@ -288,15 +371,6 @@ function moveFly(fly) {
     fly.y = constrain(fly.y, 0, height);
 }
 
-
-// Move frogs randomly with tongue attack behavior
-function moveFrog(frog) {
-    if (frameCount % 100 === 0) {
-        frog.targetLilyPad = random(lilyPads);
-    }
-    frog.x += (frog.targetLilyPad.x - frog.x) * 0.05;
-    frog.y += (frog.targetLilyPad.y - frog.y) * 0.05;
-
     if (frog.tongueState === "outbound") {
         frog.tongueY -= frog.tongueSpeed;
         if (frog.tongueY < frog.y - 50) frog.tongueState = "inbound";
@@ -305,7 +379,6 @@ function moveFrog(frog) {
     } else if (frog.tongueState === "idle" && random(100) > 98) {
         frog.tongueState = "outbound";
     }
-}
 
 // Check for collisions between fly and objects
 function checkCollision(fly, obj) {
@@ -318,8 +391,8 @@ function displayWinScreen() {
     background(0, 200, 0);
     fill(255);
     textSize(32);
-    text("You Win!", width / 2 - 80, height / 2);
-    image(crownImage, width / 2 - 50, height / 2 + 40, 100, 100);  // Show crown after frog king is defeated
+    text("You reclaimed your crown!", width / 2 - 80, height / 2);
+    image(crownImage, width / 2 - 50, height / 2 + 40, 100, 100);
 }
 
 // Display game over screen with score
@@ -329,7 +402,6 @@ function displayLoseScreen() {
     textSize(32);
     text("Game Over!", width / 2, height / 2);
     textSize(16);
-    text(`Flies Freed: ${fliesFreed}`, width / 2, height / 2 + 40);
     text("Press any key to restart", width / 2, height / 2 + 80);
 }
 
@@ -337,34 +409,6 @@ function displayLoseScreen() {
 function keyPressed() {
     if (gameState === "start") gameState = "playing";
     else if (gameState === "win" || gameState === "lose") resetGame();
-}
-
-// Electric bolt charging and firing
-function chargeElectricBolt() {
-    if (keyIsDown(SHIFT)) {
-        boltCharge += 1;
-        if (boltCharge >= 100) {
-            boltReady = true;
-            displayNotification("Bolt Charged!");
-        }
-    } else {
-        boltCharge = 0;
-        boltReady = false;
-    }
-}
-
-function fireElectricBolt() {
-    if (boltReady) {
-        // Fire bolt logic
-        boltReady = false;
-    }
-}
-
-// Display notifications for critical moments
-function displayNotification(message) {
-    fill(255, 100, 100);
-    textSize(16);
-    text(message, width / 2, height - 20);
 }
 
 function displayHearts(fly) {
@@ -385,14 +429,15 @@ function displayHearts(fly) {
 
 // Load specific level configurations
 function loadLevel(level) {
+    frogs = []; // Clear any existing frogs
+    lilyPads = []; // Clear any existing lily pads
     if (level === 1) {
         frogs = [createFrog(100, 100)];
         lilyPads = [createLilyPad(150, 150)];
-        updateBackground();
+
     } else if (level === 2) {
         frogs = [createFrog(100, 100), createFrog(200, 200)];
         lilyPads = [createLilyPad(150, 150), createLilyPad(250, 250)];
-        updateBackground();
     }
 }
 
@@ -418,6 +463,5 @@ function resetGame() {
     gameState = "start";
     fly = createFly();
     frogs = [];
-    otherFlies = [];
     loadLevel(level);
 }
