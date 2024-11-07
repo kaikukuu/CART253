@@ -34,12 +34,12 @@ let lilyPads = [];
 
 
 // Image Assets I made
-let flyImage, flyStun, flyNearDeath, deadFly, frogImage, frogTongue, lilyPadv1, lilyPadv2, fullHeartImage, emptyHeartImage, crown, swamp1, swamp2;
+let flyImage, flyStun, flyNearDeath, deadFly, frogImage, lilyPadv1, lilyPadv2, fullHeartImage, emptyHeartImage, crown, swamp1, swamp2;
 
 // Load images
 function preload() {
     //loading fly assets
-    fly = loadImage("assets/images/fly.png"); //
+    flyImage = loadImage("assets/images/fly.png"); //
     flyStun = loadImage("assets/images/fly-stun.png"); //
     flyNearDeath = loadImage("assets/images/fly-hit.png");//
     deadFly = loadImage("assets/images/fly-dead.png");//
@@ -66,6 +66,21 @@ function setup() {
     loadLevel(level);
 }
 
+// Main draw loop based on game state
+function draw() {
+    if (gameState === "start") {
+        displayTitleScreen();
+    } else if (gameState === "playing") {
+        updateBackground(); // Continuously update background
+        playGame();
+    } else if (gameState === "win") {
+        displayWinScreen();
+    } else if (gameState === "lose") {
+        displayLoseScreen();
+    }
+
+}
+
 // Display the title screen with a fade-in effect
 function displayTitleScreen() {
     background(0);
@@ -76,8 +91,131 @@ function displayTitleScreen() {
     textSize(16);
     text("Press any key to start", width / 2, height / 2 + 20);
 
-    if (opacity < 255) opacity += 2; // Increase opacity for fade-in effect
+    if (opacity < 255) opacity += 5; // Faster visibility for fade-in effect
 }
+
+
+function playGame() {
+    displayHearts();
+    drawFly();
+    moveFly();
+
+    for (let frog of frogs) {
+        if (checkFrogCollision(fly, frog)) handleCollision();
+        drawFrog(frog);
+    }
+}
+
+function displayHearts() {
+    let xPos = width - 50;
+    for (let i = 0; i < 3; i++) {
+        let heartImage = fly.hearts <= i ? emptyHeartImage : fullHeartImage;
+        image(heartImage, xPos, 20, 30, 30);
+        xPos -= 40;
+    }
+}
+
+/**
+ * Handles the fly controlled by player
+ */
+
+function createFly() {
+    return {
+        x: 50,
+        y: height / 2,
+        size: 20,
+        moveSpeed: 2,
+        hearts: 3,
+        electric: false
+    }
+}
+
+
+function drawFly() {
+    let imageToDraw = flyImage;
+    if (fly.hearts <= 1) imageToDraw = flyNearDeath;
+    else if (fly.electric) imageToDraw = flyStun;
+    image(imageToDraw, fly.x, fly.y, fly.size, fly.size);
+}
+//Player controls for fly movement
+function moveFly() {
+    if (keyIsDown(LEFT_ARROW)) fly.x -= fly.moveSpeed;
+    if (keyIsDown(RIGHT_ARROW)) fly.x += fly.moveSpeed;
+    if (keyIsDown(UP_ARROW)) fly.y -= fly.moveSpeed;
+    if (keyIsDown(DOWN_ARROW)) fly.y += fly.moveSpeed;
+    fly.x = constrain(fly.x, 0, width);
+    fly.y = constrain(fly.y, 0, height);
+}
+
+function checkFrogCollision(fly, frog) {
+    return dist(fly.x, fly.y, frog.body.x, frog.body.y) < 30;
+}
+// Apply damage when a collision occurs
+function handleCollision(fly, frog) {
+    if (resetTimer === 0) { // Only apply damage if not in reset period
+        fly.hearts -= 1;
+        resetTimer = resetDuration;  // Start reset period
+        notificationText = "Ouch! Frog Body Hit!";
+    }
+}
+
+/**
+ * Loads and reloads level
+ */
+
+function loadLevel(level) {
+    frogs = [];
+    lilyPads = [];
+    if (level === 1) {
+        frogs.push(createFrog(100, 100), createFrog(200, 200));
+        lilyPads.push(createLilyPad(150, 150), createLilyPad(250, 250), createLilyPad(150, 150));
+    }
+}
+
+/**
+ * Handles the creation of frogs systematically
+ */
+
+function createFrog(x, y) {
+    return {
+        body: { x, y, size: 100, stunned: false, stunTimer: 0 },
+        tongue: { x, y, size: 20, speed: 10, state: "idle" }
+    };
+}
+
+function drawFrog(frog) {
+    image(frogImage, frog.body.x, frog.body.y, frog.body.size, frog.body.size);
+}
+
+function createLilyPad(x, y) {
+    let padType = random() > 0.5 ? lilyPadv1 : lilyPadv2;  // Randomize between two lily pads
+    return { x: x, y: y, size: 40, image: padType };
+}
+
+function drawLilyPads(lilyPads) {
+    for (let lilyPad of lilyPads) {
+        image(lilyPad.image, lilyPad.x, lilyPad.y, lilyPad.size, lilyPad.size); // Draw the lily pad
+    }
+}
+
+function keyPressed() {
+    if (gameState === "start") gameState = "playing";
+    else if (gameState === "win" || gameState === "lose") resetGame();
+}
+
+function resetGame() {
+    level = 1;
+    fly.hearts = 3;
+    resetFlyPosition();
+    gameState = "playing";  // Ensure the game starts over
+}
+
+
+function resetFlyPosition() {
+    fly.x = 50;
+    fly.y = height / 2;
+}
+
 function displayCutScene1() {
     background(30);
     image(swamp1, -scrollPosition, 0); // Scroll the background
@@ -104,49 +242,6 @@ function displayPlayerGuide() {
     text("Make it to the other end of the frog swamp and reclaim your crown without running into frogs or getting eaten.", width / 2, height / 2 + 80);
 }
 
-// Main draw loop based on game state
-function draw() {
-    if (gameState === "start") {
-        displayTitleScreen();
-    } else if (gameState === "playing") {
-        updateBackground(); // Continuously update background
-        playGame();
-    } else if (gameState === "win") {
-        displayWinScreen();
-    } else if (gameState === "lose") {
-        displayLoseScreen();
-    }
-
-    // Reset the fly position after a brief delay (reset period)
-    if (resetTimer > 0) {
-        resetTimer--;  // Decrease reset timer each frame
-    }
-
-    // Draw the fly (normal, stunning shield, or near-death)
-    drawFly(fly);
-    updateFlyState(fly);// Update fly state based on health
-    moveFly(fly);// Update fly movement and apply health effects
-    applyHealthEffects(fly);// Display health (hearts) at the top of the screen
-    displayHearts(fly);
-
-    // Check for collisions with frogs
-    for (let frog of frogs) {
-        if (checkFrogCollision(fly, frog)) {
-            handleCollision(fly, frog);  // Apply damage for body collision
-        }
-
-        if (checkTongueCollision(fly, frog)) {
-            handleTongueCollision(fly, frog);  // Apply damage for tongue collision
-        }
-
-        drawFrog(frog);  // Draw the frog (and tongue)
-    }
-
-    // Display the notification text
-    displayNotification(notificationText);
-    updateNotification();
-}
-
 // Display notification text on screen
 function displayNotification(message) {
     if (message !== "") { //if message is not empty/clearing
@@ -165,41 +260,19 @@ function updateNotification() {
     }
 }
 
-
-function createLilyPad(x, y) {
-    let padType = random() > 0.5 ? lilyPadv1 : lilyPadv2;  // Randomize between two lily pads
-    return { x: x, y: y, size: 40, image: padType };
-}
-
-function drawLilyPad(lilyPad) {
-    image(lilyPad.image, lilyPad.x, lilyPad.y, lilyPad.size, lilyPad.size);
-}
-
-/**
- * Handles moving the tongue based on its state
- */
-function moveTongue() {
-    // Tongue matches the frog's x
-    frog.tongue.x = frog.body.x;
-    // If the tongue is idle, it doesn't do anything
-    if (frog.tongue.state === "nothing") {
-        // Do nothing
-    }
-    // If the tongue is outbound, it moves up
-    else if (frog.tongue.state === "outbound") {
-        frog.tongue.y += -frog.tongue.speed;
-        // The tongue bounces back if it hits the top
-        if (frog.tongue.y <= 0) {
-            frog.tongue.state = "inbound";
+// Updated Tongue Movement Function with Frog Parameter
+function moveTongue(frog) {
+    if (frog.tongueState === "outbound") {
+        frog.tongueY -= frog.tongueSpeed;
+        if (frog.tongueY < frog.body.y - 50) {
+            frog.tongueState = "inbound";
         }
-    }
-    // If the tongue is inbound, it moves down
-    else if (frog.tongue.state === "inbound") {
-        frog.tongue.y += frog.tongue.speed;
-        // The tongue stops if it hits the bottom
-        if (frog.tongue.y >= height) {
-            frog.tongue.state = "idle";
+    } else if (frog.tongueState === "inbound") {
+        frog.tongueY += frog.tongueSpeed;
+        if (frog.tongueY > frog.body.y) {
+            frog.tongueState = "idle";
         }
+
     }
 }
 
@@ -214,66 +287,9 @@ function checkTongueFlyOverlap() {
     }
 }
 
-function createFrog(x, y) {
-    return {
-        body: {
-            x: x,
-            y: y,
-            size: 100,
-            stunned: false,
-            stunTimer: 0,
-        },
-
-        tongue: {
-            // The frog's tongue has a position, size, speed, and state
-            x: x,
-            y: y,
-            size: 20,
-            speed: 10,
-            // Determines how the tongue moves each frame
-            state: "idle"// State can be: idle, outbound, inbound
-        }
-
-    }
-}
-
-
-function drawFrog(frog) {
-    if (frog.stunned && frameCount - frog.stunTimer < 60) {
-        tint(150);  // Grayscale for stunned effect
-    } else {
-        noTint();
-    }
-    // Draw the tongue tip
-    push();
-    fill("#ff0000");
-    noStroke();
-    ellipse(frog.tongue.x, frog.tongue.y, frog.tongue.size);
-    pop();
-
-    // Draw the rest of the tongue
-    push();
-    stroke("#ff0000");
-    strokeWeight(frog.tongue.size);
-    line(frog.tongue.x, frog.tongue.y, frog.body.x, frog.body.y);
-    pop();
-    //Draw frog img
-    //CHECK POSITIONING
-    image(frogImage, frog.body.x, frog.body.y, frog.body.size, frog.body.size); // Regular frog
-
-    frog.stunned = false;  // Reset stunned state after drawing
-}
-
-function createFly() {
-    return {
-        x: 50,
-        y: height / 2,
-        size: 20,
-        moveSpeed: 2,
-        hearts: 3,
-        electric: false
-    }
-}
+/**
+ * Handles the fly's states and visual changes
+ */
 
 function updateFlyState(fly) {
     if (fly.hearts <= 1) {
@@ -283,26 +299,6 @@ function updateFlyState(fly) {
     } else {
         fly.state = 'normal';  // Default state for fly
     }
-}
-
-function drawFly(fly) {
-    if (fly.state === 'stun') {
-        image(flyStun, fly.x, fly.y, fly.size, fly.size);
-    } else if (fly.state === 'nearDeath') {
-        image(flyNearDeath, fly.x, fly.y, fly.size, fly.size);
-    } else {
-        image(flyImage, fly.x, fly.y, fly.size, fly.size);
-    }
-}
-
-// Collision detection with frog body
-function checkFrogCollision(fly, frog) {
-    let d = dist(fly.x, fly.y, frog.x, frog.y);
-    if (d < (fly.size / 2 + frog.size / 2)) {
-        // Collided with the frog body
-        return true;
-    }
-    return false;
 }
 
 // Collision detection with frog's tongue
@@ -318,15 +314,6 @@ function checkTongueCollision(fly, frog) {
         return true;
     }
     return false;
-}
-
-// Apply damage when a collision occurs
-function handleCollision(fly, frog) {
-    if (resetTimer === 0) { // Only apply damage if not in reset period
-        fly.hearts -= 1;
-        resetTimer = resetDuration;  // Start reset period
-        notificationText = "Ouch! Frog Body Hit!";
-    }
 }
 
 // Handle frog tongue collision
@@ -346,53 +333,22 @@ function displayScore() {
     text("Frogs evaded: " + score, 10, 60);
 }
 
-function moveFly(fly) {
-    if (resetTimer > 0) {
-        return; // Skip movement during reset period
-    }
-
-    let jitterX = random(2 * -fly, fly);
-    let jitterY = random(-fly / 2, fly);
-
-    // Adjust jitter based on health level (more jitter for low health)
-    if (fly.hearts <= 1) {  // If health is at 1 heart or less, increase jitter
-        jitterX *= 2;  // Double the jitter
-        jitterY *= 2;  // Double the jitter
-    }
-
-    // Control fly movement
-    if (keyIsDown(LEFT_ARROW)) fly.x -= fly.moveSpeed + jitterX;
-    if (keyIsDown(RIGHT_ARROW)) fly.x += fly.moveSpeed + jitterX;
-    if (keyIsDown(UP_ARROW)) fly.y -= fly.moveSpeed + jitterY;
-    if (keyIsDown(DOWN_ARROW)) fly.y += fly.moveSpeed + jitterY;
-
-    // Ensure fly stays within screen bounds
-    fly.x = constrain(fly.x, 0, width);
-    fly.y = constrain(fly.y, 0, height);
-}
-
-    if (frog.tongueState === "outbound") {
-        frog.tongueY -= frog.tongueSpeed;
-        if (frog.tongueY < frog.y - 50) frog.tongueState = "inbound";
-    } else if (frog.tongueState === "inbound" && frog.tongueY >= frog.y) {
-        frog.tongueState = "idle";
-    } else if (frog.tongueState === "idle" && random(100) > 98) {
-        frog.tongueState = "outbound";
-    }
-
 // Check for collisions between fly and objects
 function checkCollision(fly, obj) {
     let d = dist(fly.x, fly.y, obj.x, obj.y);
     return d < (fly.size / 2 + obj.size / 2);
 }
 
-// Display game win screen
+// Win Screen
 function displayWinScreen() {
-    background(0, 200, 0);
-    fill(255);
+    background(0, 0, 0, 180);  // Dark overlay for the win screen
     textSize(32);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    text("You win! The fly's mission is complete!", width / 2, height / 2 - 50);
     text("You reclaimed your crown!", width / 2 - 80, height / 2);
-    image(crownImage, width / 2 - 50, height / 2 + 40, 100, 100);
+
+    image(crown, width / 2 - 50, height / 2 + 20, 100, 100);  // Display crown
 }
 
 // Display game over screen with score
@@ -411,57 +367,12 @@ function keyPressed() {
     else if (gameState === "win" || gameState === "lose") resetGame();
 }
 
-function displayHearts(fly) {
-    let heartImage = fullHeartImage; // Default to full heart image
-    let xPos = width - 120; // Position for the hearts, starts from the right
-
-    // Display 3 hearts (each heart represents 1 health point)
-    for (let i = 0; i < 3; i++) {
-        if (fly.hearts <= i) {
-            heartImage = emptyHeartImage; // Display empty heart when health is reduced
-        } else {
-            heartImage = fullHeartImage; // Full heart when health is intact
-        }
-        image(heartImage, xPos, 20, 30, 30);  // Draw heart
-        xPos -= 40;  // Move the next heart to the left
-    }
-}
-
-// Load specific level configurations
-function loadLevel(level) {
-    frogs = []; // Clear any existing frogs
-    lilyPads = []; // Clear any existing lily pads
-    if (level === 1) {
-        frogs = [createFrog(100, 100)];
-        lilyPads = [createLilyPad(150, 150)];
-
-    } else if (level === 2) {
-        frogs = [createFrog(100, 100), createFrog(200, 200)];
-        lilyPads = [createLilyPad(150, 150), createLilyPad(250, 250)];
-    }
-}
-
+// Updated Background Transition and Level Logic
 function updateBackground() {
-    backgroundOffset += 2;  // Move the background left to right
-    if (backgroundOffset >= width) {
-        backgroundOffset = 0;  // Reset to start when the player reaches the right side
-        level++;  // Change the level to transition to a new area
+    image(level === 1 ? swamp1 : swamp2, -backgroundOffset, 0, width, height);
+    backgroundOffset += 1;
+    if (backgroundOffset >= width && level < 2) {
+        backgroundOffset = 0;
+        level++;
     }
-
-    if (level === 1) {
-        image(swamp1, -backgroundOffset, 0, width, height);
-    } else if (level === 2) {
-        image(swamp2, -backgroundOffset, 0, width, height);
-    }
-}
-
-// Reset game to initial state
-function resetGame() {
-    hearts = 3;
-    score = 0;
-    level = 1;
-    gameState = "start";
-    fly = createFly();
-    frogs = [];
-    loadLevel(level);
 }
