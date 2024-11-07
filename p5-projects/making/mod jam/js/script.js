@@ -30,7 +30,7 @@ let backgroundOffset = 0;  // To scroll background
 //Variables for Reset Period
 let resetTimer = 0;
 const resetDuration = 30;  // Frames for reset period after collision
-let lilyPads = [];
+let lilyPads = []; // Array to store lily pads
 
 
 // Image Assets I made
@@ -70,6 +70,8 @@ function setup() {
 function draw() {
     if (gameState === "start") {
         displayTitleScreen();
+    } else if (gameState === "cutScene") {
+        displayCutScene1();
     } else if (gameState === "playing") {
         updateBackground(); // Continuously update background
         playGame();
@@ -92,6 +94,7 @@ function displayTitleScreen() {
     text("Press any key to start", width / 2, height / 2 + 20);
 
     if (opacity < 255) opacity += 5; // Faster visibility for fade-in effect
+
 }
 
 
@@ -99,6 +102,10 @@ function playGame() {
     displayHearts();
     drawFly();
     moveFly();
+
+    for (let lilyPad of lilyPads) {
+        image(lilyPad.image, lilyPad.x, lilyPad.y, lilyPad.size, lilyPad.size); // Draw the lily pad
+    }
 
     for (let frog of frogs) {
         if (checkFrogCollision(fly, frog)) handleCollision();
@@ -167,7 +174,7 @@ function loadLevel(level) {
     frogs = [];
     lilyPads = [];
     if (level === 1) {
-        frogs.push(createFrog(100, 100), createFrog(200, 200));
+        frogs.push(createFrog(100, 100), createFrog(200, 200), createFrog(200, 200));
         lilyPads.push(createLilyPad(150, 150), createLilyPad(250, 250), createLilyPad(150, 150));
     }
 }
@@ -178,7 +185,7 @@ function loadLevel(level) {
 
 function createFrog(x, y) {
     return {
-        body: { x, y, size: 100, stunned: false, stunTimer: 0 },
+        body: { x, y, size: 125, stunned: false, stunTimer: 0 },
         tongue: { x, y, size: 20, speed: 10, state: "idle" }
     };
 }
@@ -189,18 +196,13 @@ function drawFrog(frog) {
 
 function createLilyPad(x, y) {
     let padType = random() > 0.5 ? lilyPadv1 : lilyPadv2;  // Randomize between two lily pads
-    return { x: x, y: y, size: 40, image: padType };
+    return { x: x, y: y, size: 100, image: padType };
 }
 
 function drawLilyPads(lilyPads) {
     for (let lilyPad of lilyPads) {
         image(lilyPad.image, lilyPad.x, lilyPad.y, lilyPad.size, lilyPad.size); // Draw the lily pad
     }
-}
-
-function keyPressed() {
-    if (gameState === "start") gameState = "playing";
-    else if (gameState === "win" || gameState === "lose") resetGame();
 }
 
 function resetGame() {
@@ -216,31 +218,6 @@ function resetFlyPosition() {
     fly.y = height / 2;
 }
 
-function displayCutScene1() {
-    background(30);
-    image(swamp1, -scrollPosition, 0); // Scroll the background
-    scrollPosition += 1; // Adjust for scroll speed
-    fill(255, 255, 255, textOpacity);
-    textSize(16);
-    textAlign(CENTER);
-    text("Honored fly, your kingdom has been overrun by the Frogs who have killed your father king fly in cold blood, taken your comrades prisoner, and stolen the crown rightfully yours. As the fly kingdom's last hope you have been bestowed the power of the friction of thousands of wings with the ultimate weapon and shield: electricity.", width / 2, height / 2 - 40);
-
-    if (textOpacity < 255) textOpacity += 3; // Fade in text
-
-    if (textOpacity >= 255) {
-        displayPlayerGuide(); // Display player guide after the first cutscene
-    }
-}
-
-// Player guide function for controls and strategy
-function displayPlayerGuide() {
-    fill(255);
-    textSize(14);
-    textAlign(CENTER);
-    text("Player Guide", width / 2, height / 2 + 50);
-    text("Electric Shield: Hold Space to activate and stun frogs in case you are hit by their tongue.", width / 2, height / 2 + 120);
-    text("Make it to the other end of the frog swamp and reclaim your crown without running into frogs or getting eaten.", width / 2, height / 2 + 80);
-}
 
 // Display notification text on screen
 function displayNotification(message) {
@@ -363,7 +340,8 @@ function displayLoseScreen() {
 
 // Handle key events for starting, playing, and resetting game
 function keyPressed() {
-    if (gameState === "start") gameState = "playing";
+    if (gameState === "startFirst") displayCutScene1(), gameState = "cutScene"
+    else if (gameState === "start") gameState = "playing";
     else if (gameState === "win" || gameState === "lose") resetGame();
 }
 

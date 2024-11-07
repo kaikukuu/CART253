@@ -1,17 +1,14 @@
 # ModJam: The fly's vengeance
+Written by: Kaisa Catt
 
 A game about a fly escaping frogs and reclaiming the fly king's crown.
 
-objectives for modded frog game:
+Honestly I bit off a lot more than I could chew for this project so even though certain parts aren't implmented fully I hope I can demonstrate they are in progress.
 
-Building strength with the basics of JavaScript, particularly variables, conditionals, and events
-Developing a sense of how a more complex program works and how to make changes to it systematically
-Finding surprising ways to change a conventional design through programming specifically
-
-
-[Play it!](https://pippinbarr.github.io/cart253-examples/topics/making/frogfrogfrog/index.html)
+[Play it!](https://kaikukuu.github.io/CART253/p5-projects/making/modjam/index.html)
 
 - [Ideas](./brainstorming.md)
 - [More ideas](./frog%20mod%20ideas.md)
 - [Planning](./modscript.md)
 - [Pseudocode](./pseudocode.md)
+- [Attributions/Credits] (./attributions.md)
