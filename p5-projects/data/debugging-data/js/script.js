@@ -11,54 +11,46 @@
  * English OR French based on a variable.
  */
 
+"use strict";
+
 // A circle that will move across the screen
 let circle = {
-    // Position and size
     x: 0,
     y: 250,
     size: 100,
-    // Movement (note it starts NOT moving)
-    velocity: {
-        x: 0,
-        y: 0
-    },
+    velocity: { x: 0, y: 0 },
     speed: 2,
 };
 
 // Text data (will be loaded from JSON)
-let stringData = undefined;
+let stringData;
 
-// The language setting (en = English, fr = "French")
-let lang = "french";
+// Language setting (en = English, fr = French)
+let lang = "fr";
 
-// Our current state is set to be TITLE so we should
-// display the TITLE when the program runs
+// Initial program state set to "title"
 let state = "title";
 
 /**
- * Loads our text data
+ * Loads text data from JSON file
  */
 function preload() {
-    strings = loadJSON("assets/data/localisation.json");
+    stringData = loadJSON("assets/data/localisation.json");
 }
 
 /**
- * Create the canvas, set up text
+ * Sets up canvas and text properties
  */
 function setup() {
     createCanvas(500, 500);
-
-    // Text settings
     textSize(32);
     textAlign(CENTER, CENTER);
 }
 
 /**
- * Depending on the current state, run the function
- * to handle the state.
+ * Manages program states
  */
 function draw() {
-    // Check the state and call the appropriate function
     if (state === "title") {
         title();
     }
@@ -71,21 +63,16 @@ function draw() {
 }
 
 /**
- * Displays the title and waits for the user to press the mouse
+ * Displays the title screen and waits for user input
  */
 function title() {
+    if (!stringData) return;  // Ensure stringData is loaded
     background("#0000ff");
 
     push();
     fill("#ffffff");
-    text(strings.title[language], width / 2, height / 2)
+    text(stringData.title[lang], width / 2, height / 2);
     pop();
-    // Notice the MAGIC above that we used array notation
-    // in order to select a property according to a property
-    // name in a VARIABLE
-    // So, because lang is set to "en" or "fr" we can access
-    // that property of the strings.title object
-    // Lovely.
 
     if (mouseIsPressed) {
         state = "animation";
@@ -94,8 +81,7 @@ function title() {
 }
 
 /**
- * Animates the circle. Switches states if the circle reaches the end
- * of the canvas.
+ * Animates the circle; switches state if it reaches the edge
  */
 function animation() {
     background("#000000");
@@ -111,21 +97,20 @@ function animation() {
     ellipse(circle.x, circle.y, circle.size);
     pop();
 
-    // Check if the circle has reached the edge of the canvas
     if (circle.x > width) {
-        // If so, switch to the ending state!
         state = "ending";
     }
 }
 
 /**
- * Displays the ending text
+ * Displays the ending screen
  */
 function ending() {
+    if (!stringData) return;  // Ensure stringData is loaded
     background("#ff0000");
 
     push();
     fill("#ffffff");
-    text(strings.ending[lang], width / 2, height / 2)
+    text(stringData.ending[lang], width / 2, height / 2);
     pop();
 }
