@@ -21,3 +21,26 @@ IDEAS:
         -visual- based vs text-based vs storytelling based?
 
 - one story but from three different character pov of same game?
+
+/////////////
+2024-11-12
+
+variations brainstorming:
+
+- create 3 chapters of an animated story that takes the appearance like a visual novel
+- preferably something where I don't have to handmake all the assets lol
+
+medieval(?) lauram (laurel x amber)
+- instrument simulator: harmonica, guitar, piano
+(where each laurel, amber and kas show you how to play their respective instruments)
+
+- photo exploration game
+    - minigames (?): spot the difference, card memorization game?, collecting some kind of tokens?
+    - collect the shooting stars
+
+- game idea: the stages of the moon ? 
+- through 3 minigames; collect the missing stars from the sky; 
+    - games: identify the constellation (30sec to look at refrence or something?), name the num of moons each planet has, match the stage of the moon to its name
+    - if you find a fallen shooting star it lets you make a wish and gives you a fortune
+    
+- cat & mouse; dog & cat; mouse & dog
