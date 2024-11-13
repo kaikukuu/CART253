@@ -1,0 +1,82 @@
+
+game add on ideas
+
+-timed?
+-how many flies can you catch before missing /restart if you lose?
+--------------------
+Frog game
+
+player/frog goal:
+collect 3 golden flies within 1 min
+
+normal flies are collected and add up in your final score once you collect the 3 golden flies.
+
+collect 'special' flies    
+    -burst of flies mechanic
+    -> certain special flies give frog advantage
+        -> num of flies is doubled
+        -> frog's size doubles
+        -> turn a poisonous fly into a regular fly/or maybe on rare occasion a golden one
+    -> but be careful! within the swarms there are poisonous flies that make your health drop and you lose all your flies if accidentally eaten
+
+    -> frog health bar?
+
+    -> to win you need the three
+        -> frog is full! visual
+
+    -> frog death 
+
+assets:
+
+-timer + score tracker
+-frog health
+-special flies
+-golden flies
+-menu to start game
+-game over screen if your frog dies
+
+Challenge 1: Adding a Score (Design)
+Design: The score will be represented as a number in the top-left HUD. Each time the player dodges a frog, the score will increase by 10 points. The number will grow in size as it increases, and potentially even change color to convey the player's growing skill.
+Visual Cues: The number starts at a base size and gets larger when the player achieves a higher score. When the score reaches specific milestones, the color could change to reflect different achievement levels.
+Challenge 1: Adding a Score (Planning)
+To add this score mechanic:
+
+Initialize the Score Variable: We’ll add a score variable to track points, set initially to zero.
+Update the Score on Frog Dodge: Every time the player dodges a frog, add to the score.
+Display the Score on Screen: In the playGame() function, display the score in the HUD, adjusting the text size based on the score value to make it more dynamic.
+Challenge 2: Adding a Score (Pseudocode)
+Here’s the updated pseudocode to reflect this scoring mechanism:
+
+plaintext
+Copy code
+// Define variables
+hearts = 3
+score = 0
+evadeCount = 0
+
+setup()
+    Create canvas
+    Initialize variables
+    Load game assets
+
+playGame()
+    Display background and HUD
+    Display hearts
+    Display score
+    Move and draw fly
+    For each frog
+        Move and draw frog
+        If collision between frog tongue and fly
+            Decrease hearts
+            Check for game over
+        Else if near miss with frog (but not a collision)
+            Increase evade count
+            Increase score by 10
+            Mark frog as evaded
+    Check if level is complete
+    Display level-up screen if complete
+
+displayScore()
+    Set score color based on milestones
+    Calculate font size based on score
+    Draw the score text at (10, 80) with the current size and color
