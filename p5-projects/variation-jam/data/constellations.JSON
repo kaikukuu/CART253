@@ -1,0 +1,167 @@
+{
+    "letters": {
+        "A": {
+            "name": "Alpha",
+            "stars": [
+                {
+                    "x": 50,
+                    "y": 100,
+                    "glow": true,
+                    "animation": "twinkle"
+                },
+                {
+                    "x": 70,
+                    "y": 120,
+                    "glow": false,
+                    "animation": null
+                },
+                {
+                    "x": 90,
+                    "y": 140,
+                    "glow": true,
+                    "animation": "pulsate"
+                }
+            ],
+            "hint": {
+                "en": "The first letter of your name!",
+                "es": "¡La primera letra de tu nombre!",
+                "fr": "La première lettre de votre nom !"
+            },
+            "difficulty": "easy",
+            "reward": {
+                "message": {
+                    "en": "Great job! You restored the Alpha constellation!",
+                    "es": "¡Buen trabajo! Restauraste la constelación Alfa!",
+                    "fr": "Bravo ! Vous avez restauré la constellation Alpha !"
+                },
+                "points": 10
+            },
+            "melody": {
+                "distorted": "alpha-distorted.mp3",
+                "harmonized": "alpha-harmonized.mp3"
+            },
+            "color": "#FFD700"
+        }
+    },
+    "numbers": {
+        "27": {
+            "name": "Two-Seven",
+            "stars": [
+                {
+                    "x": 110,
+                    "y": 180
+                },
+                {
+                    "x": 130,
+                    "y": 200
+                },
+                {
+                    "x": 150,
+                    "y": 220
+                }
+            ],
+            "hint": {
+                "en": "Your age in the stars.",
+                "es": "Tu edad en las estrellas.",
+                "fr": "Votre âge parmi les étoiles."
+            },
+            "difficulty": "medium",
+            "reward": {
+                "message": {
+                    "en": "You deciphered the age constellation!",
+                    "es": "¡Descifraste la constelación de la edad!",
+                    "fr": "Vous avez déchiffré la constellation de l'âge !"
+                },
+                "points": 15
+            },
+            "melody": {
+                "distorted": "27-distorted.mp3",
+                "harmonized": "27-harmonized.mp3"
+            },
+            "color": "#FF4500"
+        }
+    },
+    "shapes": {
+        "circle": {
+            "name": "Circle",
+            "stars": [
+                {
+                    "x": 200,
+                    "y": 200
+                },
+                {
+                    "x": 220,
+                    "y": 220
+                },
+                {
+                    "x": 240,
+                    "y": 240
+                }
+            ],
+            "hint": {
+                "en": "A shape connected to you.",
+                "es": "Una forma conectada a ti.",
+                "fr": "Une forme qui vous est liée."
+            },
+            "difficulty": "hard",
+            "background": {
+                "image": "circle-nebula.jpg",
+                "effect": "particles"
+            },
+            "reward": {
+                "message": {
+                    "en": "You restored the celestial circle!",
+                    "es": "¡Restauraste el círculo celestial!",
+                    "fr": "Vous avez restauré le cercle céleste !"
+                },
+                "bonusPoints": 20
+            },
+            "melody": {
+                "distorted": "circle-distorted.mp3",
+                "harmonized": "circle-harmonized.mp3"
+            },
+            "color": "#4B0082"
+        }
+    },
+    "hidden": {
+        "easterEgg": {
+            "name": "Fly's Revenge",
+            "stars": [
+                {
+                    "x": 500,
+                    "y": 500
+                },
+                {
+                    "x": 520,
+                    "y": 520
+                },
+                {
+                    "x": 540,
+                    "y": 540
+                }
+            ],
+            "hint": {
+                "en": "A hidden constellation for the curious.",
+                "es": "Una constelación oculta para los curiosos.",
+                "fr": "Une constellation cachée pour les curieux."
+            },
+            "unlockCriteria": {
+                "score": 100,
+                "previousConstellation": "W"
+            },
+            "reward": {
+                "message": {
+                    "en": "Congratulations! You've unlocked the hidden constellation!",
+                    "es": "¡Felicidades! ¡Has desbloqueado la constelación oculta!",
+                    "fr": "Félicitations ! Vous avez débloqué la constellation cachée !"
+                },
+                "achievement": "Star Seeker"
+            },
+            "melody": {
+                "distorted": "hidden-distorted.mp3",
+                "harmonized": "hidden-harmonized.mp3"
+            },
+            "color": "#ADFF2F"
+        }
+    }
+}
