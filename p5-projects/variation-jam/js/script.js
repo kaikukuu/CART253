@@ -139,13 +139,29 @@ function drawGhostToggleNotification() {
     }
 }
 
-
-
 function generateSessionConstellations() {
     let allConstellations = constellationsData.constellations;
 
     // Shuffle and pick 6 total constellations
     selectedConstellations = shuffleArray(allConstellations).slice(0, 6);
+
+    // Store positions already used to prevent overlap
+    let usedPositions = [];
+
+    for (let constellation of selectedConstellations) {
+        let position = generateRandomPosition(usedPositions);
+        usedPositions.push(position);
+
+        // Offset each star in the constellation by this position
+        constellation.coordinates = constellation.coordinates.map(star => ({
+            x: star.x + position.x,
+            y: star.y + position.y,
+            isAligned: false // Reset alignment status
+        }));
+
+        // Store original coordinates for snapping back
+        constellation.originalCoordinates = [...constellation.coordinates];
+    }
 
     // Choose 3 constellations to scramble based on user input
     let letterInput = "A"; // Example user input
@@ -155,6 +171,24 @@ function generateSessionConstellations() {
     scrambledConstellations = selectedConstellations.filter(constellation =>
         [letterInput, ageInput, shapeInput].includes(constellation.id)
     );
+}
+function generateRandomPosition(existingPositions, minSpacing = 150) {
+    let maxAttempts = 100; // To prevent infinite loops
+    let newPosition;
+
+    do {
+        newPosition = {
+            x: random(100, width - 100), // Ensure stars don't go off the edges
+            y: random(100, height - 100)
+        };
+
+        // Check against existing positions to avoid overlap
+        let overlaps = existingPositions.some(pos => dist(pos.x, pos.y, newPosition.x, newPosition.y) < minSpacing);
+
+        if (!overlaps) break; // Valid position found
+    } while (--maxAttempts > 0);
+
+    return newPosition;
 }
 
 function drawTelescopeView() {
