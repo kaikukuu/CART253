@@ -1,5 +1,4 @@
 /**
-/**
  * Title of Project
  * Author Name
  * 
@@ -23,14 +22,18 @@ let telescopeRadius = 200; // Visible area radius
 let selectedStar = null; // The star currently being dragged
 let offsetX, offsetY; // Offset for dragging
 let magneticZone = 15; // Radius for snapping to magnetic points
+let correctSound, incorrectSound;
 
 function preload() {
-    constellations = loadJSON('data/constellations.json');
+    correctSound = loadSound('data/sound/correct.mp3');
+    incorrectSound = loadSound('data/sound/incorrect.mp3');
+    constellations = loadJSON('data/JSON/constellations.json');
 }
 
 function setup() {
     createCanvas(800, 800);
     textFont('Georgia');
+    constellationsData = constellations; // Assign loaded data
     noLoop(); // Initial setup stops drawing loop
     setupGame();
     console.log(constellations);
@@ -92,14 +95,17 @@ function generateSessionConstellations() {
 }
 
 function drawTelescopeView() {
-    // Draw telescope circle for visible area
-    fill(0, 50);
-    rect(0, 0, width, height);
-    fill(0);
+    // Draw background with a visible circular telescope
+    background(0);
     noStroke();
+    fill(50);
     rect(0, 0, width, height);
+
+    // Clip to the telescope area
+    push();
     fill(0);
     circle(telescopePosition.x, telescopePosition.y, telescopeRadius * 2);
+    pop();
 }
 
 function keyPressed() {
@@ -175,18 +181,18 @@ function checkPuzzleCompletion() {
         }
     }
 
-    // If all scrambled constellations are solved, show success message
+    // All constellations completed
     if (scrambledConstellations.every(c => c.isCompleted)) {
-        displayVictoryMessage();
-        noLoop(); // Stop game loop
+        noLoop(); // Stop the game loop
+        setTimeout(() => displayVictoryMessage(), 500); // Delay for a better effect
     }
 }
 
 function playSound(type) {
     if (type === "correct") {
-        // Play correct placement sound
+        correctSound.play();
     } else if (type === "incorrect") {
-        // Play incorrect placement sound
+        incorrectSound.play();
     }
 }
 
