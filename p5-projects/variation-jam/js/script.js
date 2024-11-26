@@ -23,6 +23,7 @@ let selectedStar = null; // The star currently being dragged
 let offsetX, offsetY; // Offset for dragging
 let magneticZone = 15; // Radius for snapping to magnetic points
 let correctSound, incorrectSound;
+let showGhosts = true; // Visibility toggle for ghost stars
 
 function preload() {
     correctSound = loadSound('data/sound/correct.mp3');
@@ -51,23 +52,42 @@ function draw() {
     background(0);
     drawTelescopeView();
     drawConstellations();
+    drawGhostToggleNotification(); // Show notification
     checkPuzzleCompletion(); // Check if all stars are aligned
+    moveTelescope(); // Smooth telescope movement
 }
 
 function drawConstellations() {
     for (let constellation of selectedConstellations) {
         let isScrambled = scrambledConstellations.includes(constellation);
 
+        // Draw lines connecting stars
+        stroke(255, isScrambled ? 100 : 255); // Dimmer for scrambled constellations
+        strokeWeight(1);
+        noFill();
+        beginShape();
+        for (let star of constellation.originalCoordinates) {
+            vertex(star.x, star.y);
+        }
+        endShape(CLOSE);
+
+        // Draw stars and their "ghosts"
         for (let i = 0; i < constellation.coordinates.length; i++) {
             let star = constellation.coordinates[i];
-            let isCorrect = star.isAligned || !isScrambled;
+            let isAligned = star.isAligned || !isScrambled;
 
             if (dist(star.x, star.y, telescopePosition.x, telescopePosition.y) < telescopeRadius) {
-                fill(isCorrect ? "lime" : "red"); // Green for aligned, red for scrambled
+                if (showGhosts && isScrambled && !isAligned) {
+                    // Draw glowing ghost for the missing star
+                    drawGhostStar(constellation.originalCoordinates[i].x, constellation.originalCoordinates[i].y);
+                }
+
+                // Draw actual star
+                fill(isAligned ? "lime" : "red"); // Green for aligned, red for misaligned
                 noStroke();
                 circle(star.x, star.y, 10);
 
-                // Highlight draggable stars in scrambled constellations
+                // Highlight the selected star (if dragging)
                 if (isScrambled && star === selectedStar) {
                     stroke(255);
                     strokeWeight(2);
@@ -78,6 +98,49 @@ function drawConstellations() {
         }
     }
 }
+
+
+function drawGhostStar(x, y) {
+    for (let radius = 20; radius > 5; radius -= 5) {
+        fill(255, map(radius, 5, 20, 20, 5)); // Gradually fade glow
+        noStroke();
+        circle(x, y, radius);
+    }
+    fill(255, 50); // Core circle
+    noStroke();
+    circle(x, y, 10);
+}
+
+function keyPressed() {
+    if (key === 'g' || key === 'G') {
+        showGhosts = !showGhosts; // Toggle ghost visibility
+    }
+}
+
+function drawGhostToggleNotification() {
+    if (showGhosts) {
+        fill(0, 200); // Semi-transparent background
+        stroke(255);
+        rect(width - 160, 20, 140, 40);
+        fill(255);
+        noStroke();
+        textSize(16);
+        textAlign(CENTER, CENTER);
+        text("Ghosts: ON", width - 90, 40);
+    } else {
+        fill(0, 200);
+        stroke(255);
+        rect(width - 160, 20, 140, 40);
+        fill(255);
+        noStroke();
+        textSize(16);
+        textAlign(CENTER, CENTER);
+        text("Ghosts: OFF", width - 90, 40);
+    }
+}
+
+
+
 function generateSessionConstellations() {
     let allConstellations = constellationsData.constellations;
 
@@ -108,18 +171,27 @@ function drawTelescopeView() {
     pop();
 }
 
-function keyPressed() {
-    // Move telescope with arrow keys
-    if (keyCode === LEFT_ARROW) telescopePosition.x -= 10;
-    if (keyCode === RIGHT_ARROW) telescopePosition.x += 10;
-    if (keyCode === UP_ARROW) telescopePosition.y -= 10;
-    if (keyCode === DOWN_ARROW) telescopePosition.y += 10;
+//ensures smooth movement when pressing keys to move the telescope view
+function moveTelescope() {
+    let speed = 5; // Speed of the telescope movement
 
-    // Keep telescope within canvas bounds
+    // Smooth movement based on arrow keys
+    if (keyIsDown(LEFT_ARROW)) {
+        telescopePosition.x -= speed;
+    }
+    if (keyIsDown(RIGHT_ARROW)) {
+        telescopePosition.x += speed;
+    }
+    if (keyIsDown(UP_ARROW)) {
+        telescopePosition.y -= speed;
+    }
+    if (keyIsDown(DOWN_ARROW)) {
+        telescopePosition.y += speed;
+    }
+
+    // Constrain the telescope within canvas bounds
     telescopePosition.x = constrain(telescopePosition.x, telescopeRadius, width - telescopeRadius);
     telescopePosition.y = constrain(telescopePosition.y, telescopeRadius, height - telescopeRadius);
-
-    redraw(); // Redraw with new telescope position
 }
 
 // Utility function to shuffle an array
