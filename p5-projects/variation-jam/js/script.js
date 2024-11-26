@@ -15,6 +15,14 @@ so first, visitor, please share with the universe the following to locate the co
 "use strict";
 
 let constellations;
+let constellationsData; // Store loaded JSON data
+let selectedConstellations = []; // Store the 6 constellations for the session
+let scrambledConstellations = []; // User-specified scrambled constellations
+let telescopePosition = { x: 400, y: 400 }; // Initial telescope position
+let telescopeRadius = 200; // Visible area radius
+let selectedStar = null; // The star currently being dragged
+let offsetX, offsetY; // Offset for dragging
+let magneticZone = 15; // Radius for snapping to magnetic points
 
 function preload() {
     constellations = loadJSON('data/constellations.json');
@@ -22,12 +30,19 @@ function preload() {
 
 function setup() {
     createCanvas(800, 800);
+    textFont('Georgia');
+    noLoop(); // Initial setup stops drawing loop
+    setupGame();
     console.log(constellations);
 }
 
-let selectedStar = null; // The star currently being dragged
-let offsetX, offsetY; // Offset for dragging
-let magneticZone = 15; // Radius for snapping to magnetic points
+function setupGame() {
+    // Generate constellations for this session
+    generateSessionConstellations();
+    console.log("Selected Constellations: ", selectedConstellations);
+    console.log("Scrambled Constellations: ", scrambledConstellations);
+    loop(); // Start drawing loop after setup
+}
 
 function draw() {
     background(0);
@@ -59,6 +74,56 @@ function drawConstellations() {
             }
         }
     }
+}
+function generateSessionConstellations() {
+    let allConstellations = constellationsData.constellations;
+
+    // Shuffle and pick 6 total constellations
+    selectedConstellations = shuffleArray(allConstellations).slice(0, 6);
+
+    // Choose 3 constellations to scramble based on user input
+    let letterInput = "A"; // Example user input
+    let ageInput = "27"; // Example user input
+    let shapeInput = "triangle"; // Example user input
+
+    scrambledConstellations = selectedConstellations.filter(constellation =>
+        [letterInput, ageInput, shapeInput].includes(constellation.id)
+    );
+}
+
+function drawTelescopeView() {
+    // Draw telescope circle for visible area
+    fill(0, 50);
+    rect(0, 0, width, height);
+    fill(0);
+    noStroke();
+    rect(0, 0, width, height);
+    fill(0);
+    circle(telescopePosition.x, telescopePosition.y, telescopeRadius * 2);
+}
+
+function keyPressed() {
+    // Move telescope with arrow keys
+    if (keyCode === LEFT_ARROW) telescopePosition.x -= 10;
+    if (keyCode === RIGHT_ARROW) telescopePosition.x += 10;
+    if (keyCode === UP_ARROW) telescopePosition.y -= 10;
+    if (keyCode === DOWN_ARROW) telescopePosition.y += 10;
+
+    // Keep telescope within canvas bounds
+    telescopePosition.x = constrain(telescopePosition.x, telescopeRadius, width - telescopeRadius);
+    telescopePosition.y = constrain(telescopePosition.y, telescopeRadius, height - telescopeRadius);
+
+    redraw(); // Redraw with new telescope position
+}
+
+// Utility function to shuffle an array
+function shuffleArray(array) {
+    let shuffled = array.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
 }
 
 function mousePressed() {
