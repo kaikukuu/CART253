@@ -1,6 +1,6 @@
 /**
- * Title of Project
- * Author Name
+ * the celestial observatory
+ * by: Kaisa Catt
  * 
  * welcome to the observatory
 something strange has happened in the universe and it’s caused the constellations in the sky to get scrambled and imbalance of the harmony of the constellations’ songs! 
@@ -40,12 +40,33 @@ function setup() {
     console.log(constellations);
 }
 
+async function getUserInputs() {
+    return new Promise((resolve) => {
+        let inputDiv = createDiv().style("color", "white").style("text-align", "center");
+        inputDiv.html("<h2>Welcome to the Observatory</h2><p>Please provide the following:</p>");
+
+        let letterInput = createInput("").attribute("placeholder", "First letter of your name").parent(inputDiv);
+        let ageInput = createInput("").attribute("placeholder", "Your age (1-100)").parent(inputDiv);
+        let shapeInput = createInput("").attribute("placeholder", "A shape you like (circle, triangle, etc.)").parent(inputDiv);
+
+        let submitButton = createButton("Submit").parent(inputDiv).mousePressed(() => {
+            let inputs = {
+                letter: letterInput.value().toUpperCase().trim(),
+                age: ageInput.value().trim(),
+                shape: shapeInput.value().trim().toLowerCase(),
+            };
+
+            inputDiv.remove(); // Remove the input div immediately
+            resolve(inputs); // Resolve the inputs
+        });
+    });
+}
+
 function setupGame() {
-    // Generate constellations for this session
-    generateSessionConstellations();
-    console.log("Selected Constellations: ", selectedConstellations);
-    console.log("Scrambled Constellations: ", scrambledConstellations);
-    loop(); // Start drawing loop after setup
+    getUserInputs().then((inputs) => {
+        generateSessionConstellations(inputs);
+        loop(); // Start the game loop after inputs are gathered and form is removed
+    });
 }
 
 function draw() {
@@ -139,16 +160,34 @@ function drawGhostToggleNotification() {
     }
 }
 
-function generateSessionConstellations() {
+function generateSessionConstellations(inputs) {
     let allConstellations = constellationsData.constellations;
 
-    // Shuffle and pick 6 total constellations
-    selectedConstellations = shuffleArray(allConstellations).slice(0, 6);
+    // Filter constellations based on the provided inputs
+    let scrambledCandidates = allConstellations.filter(constellation =>
+        constellation.id &&
+        (constellation.id.includes(inputs.letter) ||
+            constellation.id.includes(inputs.age) ||
+            constellation.id.includes(inputs.shape))
+    );
+
+    // Handle missing constellations gracefully
+    if (scrambledCandidates.length < 3) {
+        console.warn("Not enough matching constellations found. Falling back to random choices.");
+        scrambledCandidates = shuffleArray(allConstellations).slice(0, 3);
+    }
+
+    scrambledConstellations = scrambledCandidates;
+
+    // Shuffle and select the remaining constellations
+    let remainingConstellations = allConstellations.filter(c => !scrambledCandidates.includes(c));
+    selectedConstellations = [...scrambledCandidates, ...shuffleArray(remainingConstellations).slice(0, 3)];
 
     // Store positions already used to prevent overlap
     let usedPositions = [];
 
     for (let constellation of selectedConstellations) {
+        constellation.isCompleted = false; // Initialize the completion state
         let position = generateRandomPosition(usedPositions);
         usedPositions.push(position);
 
@@ -163,15 +202,8 @@ function generateSessionConstellations() {
         constellation.originalCoordinates = [...constellation.coordinates];
     }
 
-    // Choose 3 constellations to scramble based on user input
-    let letterInput = "A"; // Example user input
-    let ageInput = "27"; // Example user input
-    let shapeInput = "triangle"; // Example user input
-
-    scrambledConstellations = selectedConstellations.filter(constellation =>
-        [letterInput, ageInput, shapeInput].includes(constellation.id)
-    );
 }
+
 function generateRandomPosition(existingPositions, minSpacing = 150) {
     let maxAttempts = 100; // To prevent infinite loops
     let newPosition;
@@ -281,18 +313,20 @@ function mouseReleased() {
 }
 
 function checkPuzzleCompletion() {
+    let allAligned = true;
     for (let constellation of scrambledConstellations) {
-        if (constellation.coordinates.every(star => star.isAligned)) {
-            constellation.isCompleted = true;
+        if (!constellation.coordinates.every(star => star.isAligned)) {
+            allAligned = false;
+            break;
         }
     }
 
-    // All constellations completed
-    if (scrambledConstellations.every(c => c.isCompleted)) {
+    if (allAligned) {
         noLoop(); // Stop the game loop
-        setTimeout(() => displayVictoryMessage(), 500); // Delay for a better effect
+        setTimeout(() => displayVictoryMessage(), 500); // Delay for better effect
     }
 }
+
 
 function playSound(type) {
     if (type === "correct") {
