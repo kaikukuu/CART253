@@ -24,6 +24,8 @@ let offsetX, offsetY; // Offset for dragging
 let magneticZone = 15; // Radius for snapping to magnetic points
 let correctSound, incorrectSound;
 let showGhosts = true; // Visibility toggle for ghost stars
+let inputName, inputAge, inputShape, startButton;
+let gameStarted = false; // Track whether the game has started
 
 function preload() {
     try {
@@ -46,7 +48,7 @@ function setup() {
     textFont('Georgia');
     constellationsData = constellations; // Assign loaded data
     noLoop(); // Initial setup stops drawing loop
-    setupGame();
+    setupStartScreen(); // Display start screen
     console.log(constellations);
 }
 
@@ -80,12 +82,19 @@ function setupGame() {
 }
 
 function draw() {
-    background(0);
-    drawTelescopeView();
-    drawConstellations();
-    drawGhostToggleNotification(); // Show notification
-    checkPuzzleCompletion(); // Check if all stars are aligned
-    moveTelescope(); // Smooth telescope movement
+    if (!gameStarted) {
+        // Show start screen if the game hasn't started
+        drawStartScreen();
+    } else {
+        // Main game logic
+        background(0);
+        drawTelescopeView();
+        drawConstellations();
+        drawGhostToggleNotification();// Show notification
+        checkPuzzleCompletion(); // Check if all stars are aligned
+        moveTelescope(); // Smooth telescope movement
+    }
+
 }
 
 function drawConstellations() {
@@ -210,7 +219,8 @@ function generateSessionConstellations(inputs) {
         }));
 
         // Store original coordinates for snapping back
-        constellation.originalCoordinates = [...constellation.coordinates];
+        constellation.originalCoordinates = constellation.coordinates.map(star => ({ ...star }));
+
     }
 
 }
@@ -363,5 +373,90 @@ function displayVictoryMessage() {
     textSize(32);
     textAlign(CENTER);
     text("Congratulations! All constellations restored!", width / 2, height / 2);
+
+    let restartButton = createButton("Restart");
+    restartButton.position(width / 2 - 50, height / 2 + 50);
+    restartButton.mousePressed(() => location.reload());
 }
 
+
+// Setup the start screen elements
+function setupStartScreen() {
+    // Centering calculation
+    let centerX = width / 2;
+    let centerY = height / 2;
+
+    // Create input for name
+    inputName = createInput();
+    inputName.position(centerX - 100, centerY - 80); // Center horizontally
+    inputName.size(200);
+    inputName.attribute('placeholder', 'Enter the first letter of your name');
+
+    // Create input for age
+    inputAge = createInput();
+    inputAge.position(centerX - 100, centerY - 40); // Adjusted position
+    inputAge.size(200);
+    inputAge.attribute('placeholder', 'Enter your age (1-100)');
+    inputAge.attribute('type', 'number');
+
+    // Create input for shape
+    inputShape = createInput();
+    inputShape.position(centerX - 100, centerY); // Below the age input
+    inputShape.size(200);
+    inputShape.attribute('placeholder', 'Enter a shape (circle, star, etc.)');
+
+    // Create a start button
+    startButton = createButton('Start Game');
+    startButton.position(centerX - 50, centerY + 50); // Below the last input
+    startButton.mousePressed(startGame);
+
+    // // Style adjustments (optional)
+    // inputName.style('font-size', '16px');
+    // inputAge.style('font-size', '16px');
+    // inputShape.style('font-size', '16px');
+    // startButton.style('font-size', '16px');
+}
+
+
+function drawStartScreen() {
+    background(20); // Dark background for contrast
+    fill(255);
+    textAlign(CENTER);
+    textSize(36);
+    text('Welcome to the Observatory', width / 2, height / 2 - 200);
+    textSize(18);
+    text('Restore the constellations and their harmonious songs!', width / 2, height / 2 - 160);
+    textSize(16);
+    text('Please provide your details below:', width / 2, height / 2 - 120);
+}
+
+
+function startGame() {
+    let nameInput = inputName.value().trim();
+    let ageInput = inputAge.value().trim();
+    let shapeInput = inputShape.value().trim();
+
+    // Validate inputs
+    if (!nameInput || nameInput.length > 1 || !isNaN(nameInput)) {
+        alert('Please enter a single valid letter for your name.');
+        return;
+    }
+    if (!ageInput || isNaN(ageInput) || ageInput < 1 || ageInput > 100) {
+        alert('Please enter a valid age between 1 and 100.');
+        return;
+    }
+    if (!shapeInput) {
+        alert('Please enter a shape you like.');
+        return;
+    }
+
+    // Remove start screen elements
+    inputName.remove();
+    inputAge.remove();
+    inputShape.remove();
+    startButton.remove();
+
+    // Transition to game
+    gameStarted = true;
+    loop(); // Start the main draw loop
+}
