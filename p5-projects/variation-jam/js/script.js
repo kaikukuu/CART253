@@ -26,10 +26,20 @@ let correctSound, incorrectSound;
 let showGhosts = true; // Visibility toggle for ghost stars
 
 function preload() {
-    correctSound = loadSound('data/sound/correct.mp3');
-    incorrectSound = loadSound('data/sound/incorrect.mp3');
-    constellations = loadJSON('data/JSON/constellations.json');
+    try {
+        correctSound = loadSound('data/sound/correct.mp3');
+        incorrectSound = loadSound('data/sound/incorrect.mp3');
+        constellations = loadJSON('data/JSON/constellations.json', () => {
+            console.log("Constellations loaded successfully.");
+        }, () => {
+            console.error("Failed to load constellations.json.");
+            constellations = { constellations: [] }; // Provide a fallback
+        });
+    } catch (e) {
+        console.error("Error during preload:", e);
+    }
 }
+
 
 function setup() {
     createCanvas(800, 800);
@@ -138,17 +148,15 @@ function keyPressed() {
     }
 }
 
+let notificationTimeout;
+
 function drawGhostToggleNotification() {
-    if (showGhosts) {
-        fill(0, 200); // Semi-transparent background
-        stroke(255);
-        rect(width - 160, 20, 140, 40);
-        fill(255);
-        noStroke();
-        textSize(16);
-        textAlign(CENTER, CENTER);
-        text("Ghosts: ON", width - 90, 40);
-    } else {
+    if (showGhosts && notificationTimeout === undefined) {
+        notificationTimeout = setTimeout(() => {
+            notificationTimeout = undefined; // Clear timeout after showing once
+        }, 3000); // Show notification for 3 seconds
+    }
+    if (notificationTimeout) {
         fill(0, 200);
         stroke(255);
         rect(width - 160, 20, 140, 40);
@@ -156,7 +164,7 @@ function drawGhostToggleNotification() {
         noStroke();
         textSize(16);
         textAlign(CENTER, CENTER);
-        text("Ghosts: OFF", width - 90, 40);
+        text(`Ghosts: ${showGhosts ? "ON" : "OFF"}`, width - 90, 40);
     }
 }
 
@@ -175,7 +183,10 @@ function generateSessionConstellations(inputs) {
     if (scrambledCandidates.length < 3) {
         console.warn("Not enough matching constellations found. Falling back to random choices.");
         scrambledCandidates = shuffleArray(allConstellations).slice(0, 3);
+    } else {
+        scrambledCandidates = scrambledCandidates.slice(0, 3); // Ensure exactly 3 scrambled constellations
     }
+
 
     scrambledConstellations = scrambledCandidates;
 
@@ -258,6 +269,11 @@ function moveTelescope() {
     // Constrain the telescope within canvas bounds
     telescopePosition.x = constrain(telescopePosition.x, telescopeRadius, width - telescopeRadius);
     telescopePosition.y = constrain(telescopePosition.y, telescopeRadius, height - telescopeRadius);
+
+    // Ensure no part of the telescope view exceeds bounds
+    if (telescopePosition.x - telescopeRadius < 0) telescopePosition.x = telescopeRadius;
+    if (telescopePosition.y - telescopeRadius < 0) telescopePosition.y = telescopeRadius;
+
 }
 
 // Utility function to shuffle an array
@@ -299,12 +315,14 @@ function mouseReleased() {
         let target = constellation.originalCoordinates[constellation.coordinates.indexOf(selectedStar)];
 
         if (dist(selectedStar.x, selectedStar.y, target.x, target.y) < magneticZone) {
-            // Snap to position
+            // Snap to position and mark as aligned
             selectedStar.x = target.x;
             selectedStar.y = target.y;
             selectedStar.isAligned = true;
             playSound("correct");
         } else {
+            // Reset position to the original if it's not aligned
+            selectedStar.isAligned = false;
             playSound("incorrect");
         }
 
@@ -312,20 +330,24 @@ function mouseReleased() {
     }
 }
 
+
 function checkPuzzleCompletion() {
-    let allAligned = true;
-    for (let constellation of scrambledConstellations) {
-        if (!constellation.coordinates.every(star => star.isAligned)) {
-            allAligned = false;
-            break;
-        }
+    if (scrambledConstellations.length === 0) {
+        console.warn("No scrambled constellations to check.");
+        return;
     }
+
+    let allAligned = scrambledConstellations.every(constellation =>
+        constellation.coordinates && constellation.coordinates.every(star => star.isAligned)
+    );
 
     if (allAligned) {
         noLoop(); // Stop the game loop
         setTimeout(() => displayVictoryMessage(), 500); // Delay for better effect
     }
 }
+
+
 
 
 function playSound(type) {
