@@ -97,6 +97,46 @@ function draw() {
 
 }
 
+let selectedLetter = "A"; // Example input from the user
+let constellation = constellations[selectedLetter];
+
+// Get original coordinates
+let alignedCoordinates = constellation.originalCoordinates;
+
+// Scramble if needed
+let currentCoordinates = scrambleCoordinates(alignedCoordinates);
+
+// Store the scrambled coordinates for gameplay
+gameState.currentCoordinates = currentCoordinates;
+
+
+function scrambleCoordinates(coordinates) {
+    return coordinates.map(coord => ({
+        x: coord.x + random(-30, 30),
+        y: coord.y + random(-30, 30),
+        isAligned: false
+    }));
+}
+
+function checkAlignment(currentCoordinates, originalCoordinates) {
+    return currentCoordinates.every((current, index) => {
+        let original = originalCoordinates[index];
+        return dist(current.x, current.y, original.x, original.y) < 10; // Example tolerance
+    });
+}
+
+// Check if the stars are aligned
+// let isAligned = checkAlignment(gameState.currentCoordinates, constellation.originalCoordinates);
+
+// function drawConstellation(coordinates) {
+//     coordinates.forEach(coord => {
+//         ellipse(coord.x, coord.y, 5); // Draw stars
+//     });
+// }
+
+// // Use currentCoordinates for the scrambled version
+// drawConstellation(gameState.currentCoordinates);
+
 function drawConstellations() {
     for (let constellation of selectedConstellations) {
         let isScrambled = scrambledConstellations.includes(constellation);
