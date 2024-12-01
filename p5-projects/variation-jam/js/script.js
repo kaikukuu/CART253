@@ -26,6 +26,7 @@ let correctSound, incorrectSound;
 let showGhosts = true; // Visibility toggle for ghost stars
 let inputName, inputAge, inputShape, startButton;
 let gameStarted = false; // Track whether the game has started
+let selectedLetter, selectedAge, selectedShapeId;
 
 function preload() {
     try {
@@ -42,7 +43,6 @@ function preload() {
     }
 }
 
-
 function setup() {
     createCanvas(800, 800);
     textFont('Georgia');
@@ -51,6 +51,136 @@ function setup() {
     setupStartScreen(); // Display start screen
     console.log(constellations);
 }
+
+function setupStartScreen() {
+    let centerX = width / 2;
+    let centerY = height / 2;
+
+    inputName = createInput();
+    inputName.position(centerX - 100, centerY - 80);
+    inputName.size(200);
+    inputName.attribute('placeholder', 'Enter the first letter of your name');
+
+    inputAge = createInput();
+    inputAge.position(centerX - 100, centerY - 40);
+    inputAge.size(200);
+    inputAge.attribute('placeholder', 'Enter your age (1-100)');
+    inputAge.attribute('type', 'number');
+
+    inputShape = createInput();
+    inputShape.position(centerX - 100, centerY);
+    inputShape.size(200);
+    inputShape.attribute('placeholder', 'Enter a shape (circle, star, etc.)');
+
+    startButton = createButton('Start Game');
+    startButton.position(centerX - 50, centerY + 50);
+    startButton.mousePressed(startGame);
+}
+
+function startGame() {
+    let inputs = {
+        letter: inputName.value().toUpperCase().trim(),
+        age: inputAge.value().trim(),
+        shape: inputShape.value().trim().toLowerCase()
+    };
+
+    if (inputs.letter && inputs.age && inputs.shape) {
+        setupGame(inputs);
+    } else {
+        alert("Please fill in all fields correctly.");
+    }
+}
+
+function setupGame(inputs) {
+    selectedLetter = inputs.letter;
+    selectedAge = inputs.age;
+    selectedShapeId = inputs.shape;
+
+    generateSessionConstellations(inputs);
+    removeStartScreen(); // Clean up the input UI
+    gameStarted = true;
+    loop();
+}
+
+function generateSessionConstellations(inputs) {
+    console.log("Constellations Data:", constellationsData);
+
+    // Normalize all constellations into a single array
+    let lettersArray = Object.values(constellationsData.constellations.letters || {});
+    let numbersArray = Object.values(constellationsData.constellations.numbers || {});
+    let shapesArray = constellationsData.constellations.shapes || [];
+
+    // Combine into one array
+    let allConstellations = [...lettersArray, ...numbersArray, ...shapesArray];
+
+    console.log("All Constellations:", allConstellations);
+
+    // Filter based on user inputs
+    let scrambledCandidates = allConstellations.filter(constellation =>
+        (constellation.name && constellation.name.includes(inputs.letter)) ||
+        (constellation.name && constellation.name.includes(inputs.age)) ||
+        (constellation.id && constellation.id.includes(inputs.shape))
+    );
+
+    // Ensure at least 3 scrambled candidates
+    if (scrambledCandidates.length < 3) {
+        console.warn("Not enough matching constellations found. Falling back to random choices.");
+        scrambledCandidates = shuffleArray(allConstellations).slice(0, 3);
+    } else {
+        scrambledCandidates = scrambledCandidates.slice(0, 3);
+    }
+
+    scrambledConstellations = scrambledCandidates;
+
+    // Select additional constellations to fill the session
+    let remainingConstellations = allConstellations.filter(c => !scrambledCandidates.includes(c));
+    selectedConstellations = [...scrambledCandidates, ...shuffleArray(remainingConstellations).slice(0, 3)];
+}
+
+
+function generateRandomPosition(existingPositions, minSpacing = 150) {
+    let maxAttempts = 100;
+    let newPosition;
+
+    do {
+        newPosition = {
+            x: random(100, width - 100),
+            y: random(100, height - 100)
+        };
+
+        let overlaps = existingPositions.some(pos => dist(pos.x, pos.y, newPosition.x, newPosition.y) < minSpacing);
+
+        if (!overlaps) break;
+    } while (--maxAttempts > 0);
+
+    return newPosition;
+}
+
+function draw() {
+    if (!gameStarted) {
+        drawStartScreen();
+    } else {
+        background(0);
+        drawTelescopeView();
+        drawConstellations();
+        drawGhostToggleNotification();
+        checkPuzzleCompletion();
+        moveTelescope();
+    }
+}
+
+function drawStartScreen() {
+    background(20);
+    fill(255);
+    textAlign(CENTER);
+    textSize(36);
+    text('Welcome to the Observatory', width / 2, height / 2 - 200);
+    textSize(18);
+    text('Restore the constellations and their harmonious songs!', width / 2, height / 2 - 160);
+    textSize(16);
+    text('Please provide your details below:', width / 2, height / 2 - 120);
+}
+
 
 async function getUserInputs() {
     return new Promise((resolve) => {
@@ -74,74 +204,28 @@ async function getUserInputs() {
     });
 }
 
-function setupGame() {
-    getUserInputs().then((inputs) => {
-        generateSessionConstellations(inputs);
-        loop(); // Start the game loop after inputs are gathered and form is removed
-    });
-}
-
-function draw() {
-    if (!gameStarted) {
-        // Show start screen if the game hasn't started
-        drawStartScreen();
-    } else {
-        // Main game logic
-        background(0);
-        drawTelescopeView();
-        drawConstellations();
-        drawGhostToggleNotification();// Show notification
-        checkPuzzleCompletion(); // Check if all stars are aligned
-        moveTelescope(); // Smooth telescope movement
-    }
-
-}
-
-let selectedLetter = "A"; // Example input from the user
-let constellation = constellations[selectedLetter];
-
-// Get original coordinates
-let alignedCoordinates = constellation.originalCoordinates;
-
-// Scramble if needed
-let currentCoordinates = scrambleCoordinates(alignedCoordinates);
-
-// Store the scrambled coordinates for gameplay
-gameState.currentCoordinates = currentCoordinates;
-
 
 function scrambleCoordinates(coordinates) {
     return coordinates.map(coord => ({
-        x: coord.x + random(-30, 30),
-        y: coord.y + random(-30, 30),
-        isAligned: false
+        x: coord.x + random(-50, 50),
+        y: coord.y + random(-50, 50),
+        isAligned: false  // Ensure the alignment flag is reset
     }));
 }
 
 function checkAlignment(currentCoordinates, originalCoordinates) {
+    const tolerance = 10; // Example tolerance (pixels)
     return currentCoordinates.every((current, index) => {
         let original = originalCoordinates[index];
-        return dist(current.x, current.y, original.x, original.y) < 10; // Example tolerance
+        return dist(current.x, current.y, original.x, original.y) < tolerance;
     });
 }
-
-// Check if the stars are aligned
-// let isAligned = checkAlignment(gameState.currentCoordinates, constellation.originalCoordinates);
-
-// function drawConstellation(coordinates) {
-//     coordinates.forEach(coord => {
-//         ellipse(coord.x, coord.y, 5); // Draw stars
-//     });
-// }
-
-// // Use currentCoordinates for the scrambled version
-// drawConstellation(gameState.currentCoordinates);
 
 function drawConstellations() {
     for (let constellation of selectedConstellations) {
         let isScrambled = scrambledConstellations.includes(constellation);
 
-        // Draw lines connecting stars
+        // Dim the lines for scrambled constellations
         stroke(255, isScrambled ? 100 : 255); // Dimmer for scrambled constellations
         strokeWeight(1);
         noFill();
@@ -158,22 +242,13 @@ function drawConstellations() {
 
             if (dist(star.x, star.y, telescopePosition.x, telescopePosition.y) < telescopeRadius) {
                 if (showGhosts && isScrambled && !isAligned) {
-                    // Draw glowing ghost for the missing star
                     drawGhostStar(constellation.originalCoordinates[i].x, constellation.originalCoordinates[i].y);
                 }
 
-                // Draw actual star
-                fill(isAligned ? "lime" : "red"); // Green for aligned, red for misaligned
+                // Draw the star (green if aligned, red if misaligned)
+                fill(isAligned ? "lime" : "red");
                 noStroke();
                 circle(star.x, star.y, 10);
-
-                // Highlight the selected star (if dragging)
-                if (isScrambled && star === selectedStar) {
-                    stroke(255);
-                    strokeWeight(2);
-                    noFill();
-                    circle(star.x, star.y, 15);
-                }
             }
         }
     }
@@ -215,73 +290,6 @@ function drawGhostToggleNotification() {
         textAlign(CENTER, CENTER);
         text(`Ghosts: ${showGhosts ? "ON" : "OFF"}`, width - 90, 40);
     }
-}
-
-function generateSessionConstellations(inputs) {
-    let allConstellations = constellationsData.constellations;
-
-    // Filter constellations based on the provided inputs
-    let scrambledCandidates = allConstellations.filter(constellation =>
-        constellation.id &&
-        (constellation.id.includes(inputs.letter) ||
-            constellation.id.includes(inputs.age) ||
-            constellation.id.includes(inputs.shape))
-    );
-
-    // Handle missing constellations gracefully
-    if (scrambledCandidates.length < 3) {
-        console.warn("Not enough matching constellations found. Falling back to random choices.");
-        scrambledCandidates = shuffleArray(allConstellations).slice(0, 3);
-    } else {
-        scrambledCandidates = scrambledCandidates.slice(0, 3); // Ensure exactly 3 scrambled constellations
-    }
-
-
-    scrambledConstellations = scrambledCandidates;
-
-    // Shuffle and select the remaining constellations
-    let remainingConstellations = allConstellations.filter(c => !scrambledCandidates.includes(c));
-    selectedConstellations = [...scrambledCandidates, ...shuffleArray(remainingConstellations).slice(0, 3)];
-
-    // Store positions already used to prevent overlap
-    let usedPositions = [];
-
-    for (let constellation of selectedConstellations) {
-        constellation.isCompleted = false; // Initialize the completion state
-        let position = generateRandomPosition(usedPositions);
-        usedPositions.push(position);
-
-        // Offset each star in the constellation by this position
-        constellation.coordinates = constellation.coordinates.map(star => ({
-            x: star.x + position.x,
-            y: star.y + position.y,
-            isAligned: false // Reset alignment status
-        }));
-
-        // Store original coordinates for snapping back
-        constellation.originalCoordinates = constellation.coordinates.map(star => ({ ...star }));
-
-    }
-
-}
-
-function generateRandomPosition(existingPositions, minSpacing = 150) {
-    let maxAttempts = 100; // To prevent infinite loops
-    let newPosition;
-
-    do {
-        newPosition = {
-            x: random(100, width - 100), // Ensure stars don't go off the edges
-            y: random(100, height - 100)
-        };
-
-        // Check against existing positions to avoid overlap
-        let overlaps = existingPositions.some(pos => dist(pos.x, pos.y, newPosition.x, newPosition.y) < minSpacing);
-
-        if (!overlaps) break; // Valid position found
-    } while (--maxAttempts > 0);
-
-    return newPosition;
 }
 
 function drawTelescopeView() {
@@ -360,23 +368,25 @@ function mouseDragged() {
 
 function mouseReleased() {
     if (selectedStar) {
-        // Check if the star is close to its target position
+        // Find the constellation this star belongs to
         let constellation = scrambledConstellations.find(c => c.coordinates.includes(selectedStar));
         let target = constellation.originalCoordinates[constellation.coordinates.indexOf(selectedStar)];
 
-        if (dist(selectedStar.x, selectedStar.y, target.x, target.y) < magneticZone) {
-            // Snap to position and mark as aligned
+        let isAligned = checkAlignment([selectedStar], [target]);
+
+        if (isAligned) {
             selectedStar.x = target.x;
             selectedStar.y = target.y;
             selectedStar.isAligned = true;
             playSound("correct");
         } else {
-            // Reset position to the original if it's not aligned
+            selectedStar.x = target.x; // Reset to original if not aligned
+            selectedStar.y = target.y;
             selectedStar.isAligned = false;
             playSound("incorrect");
         }
 
-        selectedStar = null; // Deselect star
+        selectedStar = null; // Deselect star after check
     }
 }
 
@@ -388,16 +398,14 @@ function checkPuzzleCompletion() {
     }
 
     let allAligned = scrambledConstellations.every(constellation =>
-        constellation.coordinates && constellation.coordinates.every(star => star.isAligned)
+        constellation.coordinates.every(star => star.isAligned)
     );
 
     if (allAligned) {
-        noLoop(); // Stop the game loop
-        setTimeout(() => displayVictoryMessage(), 500); // Delay for better effect
+        noLoop(); // Stop the game loop once the puzzle is complete
+        setTimeout(() => displayVictoryMessage(), 500); // Delay victory message for effect
     }
 }
-
-
 
 
 function playSound(type) {
@@ -419,84 +427,9 @@ function displayVictoryMessage() {
     restartButton.mousePressed(() => location.reload());
 }
 
-
-// Setup the start screen elements
-function setupStartScreen() {
-    // Centering calculation
-    let centerX = width / 2;
-    let centerY = height / 2;
-
-    // Create input for name
-    inputName = createInput();
-    inputName.position(centerX - 100, centerY - 80); // Center horizontally
-    inputName.size(200);
-    inputName.attribute('placeholder', 'Enter the first letter of your name');
-
-    // Create input for age
-    inputAge = createInput();
-    inputAge.position(centerX - 100, centerY - 40); // Adjusted position
-    inputAge.size(200);
-    inputAge.attribute('placeholder', 'Enter your age (1-100)');
-    inputAge.attribute('type', 'number');
-
-    // Create input for shape
-    inputShape = createInput();
-    inputShape.position(centerX - 100, centerY); // Below the age input
-    inputShape.size(200);
-    inputShape.attribute('placeholder', 'Enter a shape (circle, star, etc.)');
-
-    // Create a start button
-    startButton = createButton('Start Game');
-    startButton.position(centerX - 50, centerY + 50); // Below the last input
-    startButton.mousePressed(startGame);
-
-    // // Style adjustments (optional)
-    // inputName.style('font-size', '16px');
-    // inputAge.style('font-size', '16px');
-    // inputShape.style('font-size', '16px');
-    // startButton.style('font-size', '16px');
-}
-
-
-function drawStartScreen() {
-    background(20); // Dark background for contrast
-    fill(255);
-    textAlign(CENTER);
-    textSize(36);
-    text('Welcome to the Observatory', width / 2, height / 2 - 200);
-    textSize(18);
-    text('Restore the constellations and their harmonious songs!', width / 2, height / 2 - 160);
-    textSize(16);
-    text('Please provide your details below:', width / 2, height / 2 - 120);
-}
-
-
-function startGame() {
-    let nameInput = inputName.value().trim();
-    let ageInput = inputAge.value().trim();
-    let shapeInput = inputShape.value().trim();
-
-    // Validate inputs
-    if (!nameInput || nameInput.length > 1 || !isNaN(nameInput)) {
-        alert('Please enter a single valid letter for your name.');
-        return;
-    }
-    if (!ageInput || isNaN(ageInput) || ageInput < 1 || ageInput > 100) {
-        alert('Please enter a valid age between 1 and 100.');
-        return;
-    }
-    if (!shapeInput) {
-        alert('Please enter a shape you like.');
-        return;
-    }
-
-    // Remove start screen elements
+function removeStartScreen() {
     inputName.remove();
     inputAge.remove();
     inputShape.remove();
     startButton.remove();
-
-    // Transition to game
-    gameStarted = true;
-    loop(); // Start the main draw loop
 }
