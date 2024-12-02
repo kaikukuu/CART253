@@ -18,7 +18,7 @@ let constellationsData; // Store loaded JSON data
 let selectedConstellations = []; // Store the 6 constellations for the session
 let scrambledConstellations = []; // User-specified scrambled constellations
 let telescopePosition = { x: 400, y: 400 }; // Initial telescope position
-let telescopeRadius = 200; // Visible area radius
+let telescopeRadius = 100; // Visible area radius
 let selectedStar = null; // The star currently being dragged
 let offsetX, offsetY; // Offset for dragging
 let magneticZone = 15; // Radius for snapping to magnetic points
@@ -28,6 +28,7 @@ let inputName, inputAge, inputShape, startButton;
 let gameStarted = false; // Track whether the game has started
 let selectedLetter, selectedAge, selectedShapeId;
 let predefinedShapesLabel;
+let notificationTimeout;
 
 function preload() {
     try {
@@ -148,7 +149,6 @@ function setupGame(inputs) {
     loop();
 }
 
-// Modify to use the updated `coordinates` field for scrambling logic
 function generateSessionConstellations(inputs) {
     console.log("Constellations Data:", constellationsData);
 
@@ -176,7 +176,7 @@ function generateSessionConstellations(inputs) {
         userConstellations = userConstellations.slice(0, 3);
     }
 
-    // Scramble the coordinates for scrambled constellations
+    // Generate initial positions for scrambled constellations
     scrambledConstellations = userConstellations.map(constellation => ({
         ...constellation,
         coordinates: scrambleCoordinates(constellation.coordinates)
@@ -184,30 +184,60 @@ function generateSessionConstellations(inputs) {
 
     // Select additional constellations to fill the session
     let remainingConstellations = allConstellations.filter(c => !userConstellations.includes(c));
+    let additionalConstellations = shuffleArray(remainingConstellations).slice(0, 3);
+
     selectedConstellations = [
         ...scrambledConstellations,
-        ...shuffleArray(remainingConstellations).slice(0, 3)
+        ...additionalConstellations.map(constellation => ({
+            ...constellation,
+            coordinates: offsetCoordinates(constellation.coordinates)
+        }))
     ];
 }
 
+function offsetCoordinates(coordinates) {
+    let existingPositions = []; // Store positions for comparison
 
+    return coordinates.map(coord => {
+        let newPosition = generateRandomPosition(existingPositions, 150); // Ensure spacing
+        existingPositions.push(newPosition);
+        return { x: coord.x + newPosition.x, y: coord.y + newPosition.y };
+    });
+}
 
 function generateRandomPosition(existingPositions, minSpacing = 150) {
     let maxAttempts = 100;
     let newPosition;
 
-    do {
+    while (maxAttempts > 0) {
         newPosition = {
             x: random(100, width - 100),
             y: random(100, height - 100)
         };
 
-        let overlaps = existingPositions.some(pos => dist(pos.x, pos.y, newPosition.x, newPosition.y) < minSpacing);
+        let isTooClose = existingPositions.some(pos =>
+            dist(pos.x, pos.y, newPosition.x, newPosition.y) < minSpacing
+        );
 
-        if (!overlaps) break;
-    } while (--maxAttempts > 0);
+        if (!isTooClose) {
+            return newPosition; // Valid position found
+        }
 
-    return newPosition;
+        maxAttempts--;
+    }
+
+    console.warn("Could not find a valid position after maximum attempts.");
+    return { x: random(100, width - 100), y: random(100, height - 100) };
+}
+
+function scrambleCoordinates(coordinates) {
+    let existingPositions = []; // Track positions to avoid overlaps
+
+    return coordinates.map(() => {
+        let newPosition = generateRandomPosition(existingPositions, 150); // Adjust spacing
+        existingPositions.push(newPosition);
+        return { ...newPosition, isAligned: false };
+    });
 }
 
 function draw() {
@@ -256,15 +286,6 @@ async function getUserInputs() {
             resolve(inputs); // Resolve the inputs
         });
     });
-}
-
-
-function scrambleCoordinates(coordinates) {
-    return coordinates.map(coord => ({
-        x: coord.x + random(-50, 50),
-        y: coord.y + random(-50, 50),
-        isAligned: false  // Ensure the alignment flag is reset
-    }));
 }
 
 function checkAlignment(currentCoordinates, originalCoordinates) {
@@ -317,28 +338,33 @@ function drawGhostStar(x, y) {
 }
 
 function keyPressed() {
-    if (key === 'g' || key === 'G') {
-        showGhosts = !showGhosts; // Toggle ghost visibility
+    if (key.toLowerCase === 'g') {
+        showGhosts = !showGhosts; console.log(`Ghosts toggled: ${showGhosts}`);
+        setNotificationTimeout();
     }
 }
 
-let notificationTimeout;
+function setNotificationTimeout() {
+    if (notificationTimeout) return;
+    notificationTimeout = setTimeout(() => {
+        notificationTimeout = undefined;
+    }, 3000);
+}
 
 function drawGhostToggleNotification() {
-    if (showGhosts && notificationTimeout === undefined) {
-        notificationTimeout = setTimeout(() => {
-            notificationTimeout = undefined; // Clear timeout after showing once
-        }, 3000); // Show notification for 3 seconds
-    }
     if (notificationTimeout) {
+        const x = constrain(width - 160, 0, width - 140);
+        const y = constrain(20, 0, height - 40);
+
         fill(0, 200);
         stroke(255);
-        rect(width - 160, 20, 140, 40);
+        rect(x, y, 140, 40);
+
         fill(255);
         noStroke();
         textSize(16);
         textAlign(CENTER, CENTER);
-        text(`Ghosts: ${showGhosts ? "ON" : "OFF"}`, width - 90, 40);
+        text(`Ghosts: ${showGhosts ? "ON" : "OFF"}`, x + 70, y + 20);
     }
 }
 
