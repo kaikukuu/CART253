@@ -6,7 +6,23 @@ Written by: Kaisa Catt
 
 ## Description
 
-This description should help the reader understand what the program is, what any controls do, and perhaps what the desired experience it.
+welcome to the observatory
+something strange has happened in the universe and it’s caused the constellations in the sky to get scrambled and imbalance of the harmony of the constellations’ song! 
+
+we need your help to put the stars all back into place and restore the parts of the songs that are scrambled! the song can only be restored by the right person 
+
+so first, visitor, please share with the universe  to locate the constellations for you to restore. 
+
+Controls:
+
+-Use your arrow keys to explore the observatory's telecscope and remember your answers ;)  
+
+-Ghost stars is a an optional function (recommended if playing for the first time, it may be too difficult to play without, even for me) which display the "ghost stars" showing you where to align stars
+
+-Realign the misaligned stars, marked in red, by clicking and dragging into their rightful place upon which the star will turn green. 
+
+-Once you've completed the constellation correctly it will twinkle and you can explore to find the others to return the melody of the constellations!
+
 
 ## Credits
 
