@@ -64,13 +64,14 @@ function createInputField(labelText, transform, x, y, callback) {
 
 /** === GAME START === */
 function startGame() {
-    const nameValue = inputName.value();
-    const ageValue = inputAge.value();
-    const shapeValue = inputShape.value();
+    const nameValue = inputName.value().toUpperCase();
+    const ageValue = parseInt(inputAge.value(), 10);
+    const shapeValue = inputShape.value().toLowerCase();
 
     if (!nameValue || isNaN(ageValue) || ageValue < 1 || ageValue > 100 || !shapeValue) {
         return alert("Please fill in all fields correctly. Age should be between 1 and 100.");
     }
+
     generateSessionConstellations({ letter: nameValue, age: ageValue, shape: shapeValue });
     removeStartScreen();
     gameState.gameStarted = true;
@@ -126,7 +127,10 @@ function offsetCoordinates(coords) {
     return coords.map(coord => {
         const newPosition = generateUniquePosition(positions, 200); // Increased spacing
         positions.push(newPosition);
-        return { x: coord.x + newPosition.x - width / 2, y: coord.y + newPosition.y - height / 2 };
+        return {
+            x: constrain(coord.x + newPosition.x - width / 2, 0, width),
+            y: constrain(coord.y + newPosition.y - height / 2, 0, height)
+        };
     });
 }
 
@@ -162,7 +166,7 @@ function drawConstellations() {
     for (const constellation of gameState.selectedConstellations) {
         const isScrambled = gameState.scrambledConstellations.includes(constellation);
 
-        stroke(255, isScrambled ? 100 : 255);
+        stroke(isScrambled ? color(255, 100, 100) : 255); // Brighter stroke for scrambled
         strokeWeight(1);
         noFill();
         beginShape();
@@ -291,9 +295,7 @@ function mouseReleased() {
         let constellation = gameState.scrambledConstellations.find(c => c.coordinates.includes(gameState.selectedStar));
         let target = constellation.coordinates[constellation.coordinates.indexOf(gameState.selectedStar)];
 
-        let isAligned = checkAlignment([gameState.selectedStar], [target]);
-
-        if (isAligned) {
+        if (checkAlignment([gameState.selectedStar], [target])) {
             gameState.selectedStar.x = target.x;
             gameState.selectedStar.y = target.y;
             gameState.selectedStar.isAligned = true;
@@ -303,6 +305,7 @@ function mouseReleased() {
         }
 
         gameState.selectedStar = null;
+        checkPuzzleCompletion();
     }
 }
 
@@ -310,12 +313,7 @@ function mouseReleased() {
  * checks that scrambled constellations are aligned and once they are stops the game loop and displays victory screen
  */
 function checkPuzzleCompletion() {
-    if (gameState.scrambledConstellations.length === 0) {
-        console.warn("No scrambled constellations to check.");
-        return;
-    }
-
-    let allAligned = gameState.scrambledConstellations.every(constellation =>
+    const allAligned = gameState.scrambledConstellations.every(constellation =>
         constellation.coordinates.every(star => star.isAligned)
     );
 
@@ -378,4 +376,9 @@ function checkAlignment(currentCoordinates, originalCoordinates) {
         let original = originalCoordinates[index];
         return dist(current.x, current.y, original.x, original.y) < tolerance;
     });
+}
+
+function isAligned(star, alignedPosition) {
+    let distance = dist(star.x, star.y, alignedPosition.x, alignedPosition.y);
+    return distance < alignmentThreshold; // Threshold for snapping into place
 }
