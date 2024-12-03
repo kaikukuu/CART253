@@ -22,7 +22,7 @@ let telescopeRadius = 100; // Visible area radius
 let selectedStar = null; // The star currently being dragged
 let offsetX, offsetY; // Offset for dragging
 let magneticZone = 15; // Radius for snapping to magnetic points
-let correctSound, incorrectSound;
+let correctSound, incorrectSound; //sounds initialization
 let showGhosts = true; // Visibility toggle for ghost stars
 let inputName, inputAge, inputShape, startButton;
 let gameStarted = false; // Track whether the game has started
@@ -133,7 +133,8 @@ function setupStartScreen() {
 }
 
 /**
- * gathering and clearing up any possible user errors in inputs then if inputs are collected calls setupGame to use them to generate constellations
+ * gathering and clearing up any possible user errors in inputs 
+ * then if inputs are collected calls setupGame to use them to generate constellations
  */
 function startGame() {
     let inputs = {
@@ -151,7 +152,8 @@ function startGame() {
 }
 
 /**
- * sets up the user inputs and calls generateSessionConstellations to generate the constellations, remove the start screen and starts the game loop
+ * sets up the user inputs and calls generateSessionConstellations to generate the constellations, 
+ * removes the start screen and starts the game loop
  */
 function setupGame(inputs) {
     selectedLetter = inputs.letter;
