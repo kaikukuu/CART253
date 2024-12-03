@@ -76,6 +76,22 @@ function startGame() {
     removeStartScreen();
     gameState.gameStarted = true;
     loop();
+
+    // Add the ghost toggle button after the game starts
+    createGhostToggleButton();
+}
+
+/** === GHOST TOGGLE BUTTON === */
+function createGhostToggleButton() {
+    const button = createButton('Toggle Ghost Stars');
+    button.position(10, 10);
+    button.mousePressed(toggleGhostStars);
+}
+
+/** Toggle function to show or hide ghost stars */
+function toggleGhostStars() {
+    gameState.showGhosts = !gameState.showGhosts;
+    console.log(`Ghost stars are now ${gameState.showGhosts ? 'ON' : 'OFF'}`);
 }
 
 
@@ -128,8 +144,8 @@ function offsetCoordinates(coords) {
         const newPosition = generateUniquePosition(positions, 200); // Increased spacing
         positions.push(newPosition);
         return {
-            x: constrain(coord.x + newPosition.x - width / 2, 0, width),
-            y: constrain(coord.y + newPosition.y - height / 2, 0, height)
+            x: constrain(coord.x + newPosition.x - width / 2, 50, width - 50),  // Added more margin
+            y: constrain(coord.y + newPosition.y - height / 2, 50, height - 50)  // Added more margin
         };
     });
 }
@@ -175,7 +191,9 @@ function drawConstellations() {
 
         for (const star of constellation.coordinates) {
             const visible = dist(star.x, star.y, gameState.telescope.x, gameState.telescope.y) < gameState.telescope.radius;
-            if (visible && gameState.showGhosts && isScrambled && !star.isAligned) drawGhostStar(star.x, star.y);
+            if (visible && gameState.showGhosts && isScrambled && !star.isAligned) {
+                drawGhostStar(star.x, star.y); // Draw ghost stars if enabled
+            }
 
             fill(star.isAligned ? "lime" : "red");
             noStroke();
