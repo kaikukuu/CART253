@@ -120,14 +120,40 @@ function generateSessionConstellations({ letter, age, shape }) {
         ...(gameState.constellationsData.constellations.shapes || []),
     ];
 
-    gameState.scrambledConstellations = filterAndScrambleConstellations(allConstellations, { letter, age, shape });
-    const remainingConstellations = allConstellations.filter(c => !gameState.scrambledConstellations.includes(c));
-    const additionalConstellations = shuffleArray(remainingConstellations).slice(0, 3);
+    // Select constellations based on user input
+    const selectedLetterConstellation = allConstellations.find(c => c.name && c.name.includes(letter));
+    const selectedNumberConstellation = allConstellations.find(c => c.name && c.name.includes(age));
+    const selectedShapeConstellation = allConstellations.find(c => c.id && c.id.includes(shape));
 
+    // Add selected constellations and 3 random constellations
+    const remainingConstellations = allConstellations.filter(c => ![selectedLetterConstellation, selectedNumberConstellation, selectedShapeConstellation].includes(c));
+    const randomConstellations = shuffleArray(remainingConstellations).slice(0, 3);
+
+    // Combine selected constellations and random ones
     gameState.selectedConstellations = [
-        ...gameState.scrambledConstellations,
-        ...additionalConstellations.map(c => ({ ...c, coordinates: offsetCoordinates(c.coordinates) })),
+        selectedLetterConstellation,
+        selectedNumberConstellation,
+        selectedShapeConstellation,
+        ...randomConstellations
     ];
+
+    // Store correct positions for ghost constellations
+    gameState.correctPositions = gameState.selectedConstellations.map(c => ({
+        name: c.name,
+        correctCoordinates: [...c.coordinates] // Copying original coordinates
+    }));
+
+    // Scramble the coordinates for the selected constellations
+    gameState.scrambledConstellations = gameState.selectedConstellations.map(c => ({
+        ...c,
+        coordinates: scrambleCoordinates(c.coordinates)
+    }));
+
+    // Offset coordinates for better distribution on canvas
+    gameState.selectedConstellations = gameState.selectedConstellations.map(c => ({
+        ...c,
+        coordinates: offsetCoordinates(c.coordinates)
+    }));
 }
 
 function filterAndScrambleConstellations(allConstellations, { letter, age, shape }) {
@@ -179,50 +205,73 @@ function draw() {
 
 /** DRAWING FUNCTIONS */
 function drawConstellations() {
-    for (const constellation of gameState.selectedConstellations) {
-        const isScrambled = gameState.scrambledConstellations.includes(constellation);
+    // Draw ghost constellations (static) with lines between stars
+    gameState.correctPositions.forEach(c => {
+        drawStars(c.correctCoordinates, true); // Draw with ghost styling (fixed position)
+        drawConstellationLines(c.correctCoordinates); // Draw lines connecting stars in the constellation
+    });
 
-        stroke(isScrambled ? color(255, 100, 100) : 255); // Brighter stroke for scrambled
-        strokeWeight(1);
-        noFill();
-        beginShape();
-        for (const star of constellation.coordinates) vertex(star.x, star.y);
-        endShape(CLOSE);
+    // Draw scrambled constellations (moveable) with lines between stars
+    gameState.scrambledConstellations.forEach(c => {
+        drawStars(c.coordinates, false); // Draw with normal styling (moveable)
+        drawConstellationLines(c.coordinates); // Draw lines connecting stars in the constellation
+    });
+}
 
-        for (const star of constellation.coordinates) {
-            const visible = dist(star.x, star.y, gameState.telescope.x, gameState.telescope.y) < gameState.telescope.radius;
-            if (visible && gameState.showGhosts && isScrambled && !star.isAligned) {
-                drawGhostStar(star.x, star.y); // Draw ghost stars if enabled
-            }
-
-            fill(star.isAligned ? "lime" : "red");
-            noStroke();
-            circle(star.x, star.y, 10);
+// Helper function to draw stars with different styles
+function drawStars(starCoordinates, isGhost) {
+    for (let i = 0; i < starCoordinates.length; i++) {
+        const coord = starCoordinates[i];
+        if (isGhost) {
+            fill(255, 100); // Ghost stars are semi-transparent
+        } else {
+            fill(255); // Regular stars are solid
         }
+        ellipse(coord.x, coord.y, 10, 10); // Draw star at the given position
     }
 }
 
-
-function drawGhostStar(x, y) {
-    for (let radius = 20; radius > 5; radius -= 5) {
-        fill(255, map(radius, 5, 20, 20, 5)); // Gradually fade glow
-        noStroke();
-        circle(x, y, radius);
+// Helper function to draw lines between stars of the same constellation
+function drawConstellationLines(starCoordinates) {
+    for (let i = 0; i < starCoordinates.length; i++) {
+        for (let j = i + 1; j < starCoordinates.length; j++) {
+            const star1 = starCoordinates[i];
+            const star2 = starCoordinates[j];
+            stroke(255, 100); // Lines are semi-transparent white
+            line(star1.x, star1.y, star2.x, star2.y); // Draw line between the stars
+        }
     }
-    fill(255, 50); // Core circle
-    noStroke();
-    circle(x, y, 10);
 }
 
 function drawTelescopeView() {
     noStroke();
     fill(50);
-    rect(0, 0, width, height);
+    rect(0, 0, width, height); // Clear the whole canvas with a black background
     push();
     fill(0);
-    circle(gameState.telescope.x, gameState.telescope.y, gameState.telescope.radius * 2);
+    circle(gameState.telescope.x, gameState.telescope.y, gameState.telescope.radius * 2); // Telescope view circle
     pop();
+
+    // Now, only show stars within the telescope's circle
+    gameState.scrambledConstellations.forEach(c => {
+        c.coordinates.forEach(star => {
+            if (dist(star.x, star.y, gameState.telescope.x, gameState.telescope.y) <= gameState.telescope.radius) {
+                drawStar(star.x, star.y, false); // Draw star if inside the telescope view
+            }
+        });
+    });
 }
+
+function drawStar(x, y, isGhost) {
+    if (isGhost) {
+        fill(255, 100); // Ghost stars are semi-transparent
+    } else {
+        fill(255); // Regular stars are solid
+    }
+    ellipse(x, y, 10, 10); // Draw star at the given position
+}
+
+
 
 function drawStartScreen() {
     background(20);
