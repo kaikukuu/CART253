@@ -331,7 +331,7 @@ async function getUserInputs() {
  * checks if the current coordinates of scrambeled stars align with the defined correct coordinates
  */
 function checkAlignment(currentCoordinates, originalCoordinates) {
-    const tolerance = 10; // Example tolerance (pixels)
+    const tolerance = 20; // Example tolerance (pixels)
     return currentCoordinates.every((current, index) => {
         let original = originalCoordinates[index];
         return dist(current.x, current.y, original.x, original.y) < tolerance;
@@ -346,7 +346,7 @@ function drawConstellations() {
     for (let constellation of selectedConstellations) {
         let isScrambled = scrambledConstellations.includes(constellation);
 
-        stroke(255, isScrambled ? 100 : 255); // Dimmer for scrambled constellations
+        stroke(255, !isScrambled ? 100 : 255); // Dimmer for scrambled constellations
         strokeWeight(1);
         noFill();
         beginShape();
@@ -360,7 +360,7 @@ function drawConstellations() {
             let isAligned = star.isAligned || !isScrambled;
 
             if (dist(star.x, star.y, telescopePosition.x, telescopePosition.y) < telescopeRadius) {
-                if (showGhosts && isScrambled && !isAligned) {
+                if (isScrambled && !isAligned) {
                     drawGhostStar(constellation.coordinates[i].x, constellation.coordinates[i].y);
                 }
 
