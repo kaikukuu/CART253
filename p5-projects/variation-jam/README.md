@@ -26,3 +26,33 @@ Controls:
 ## Credits
 
 This project uses [p5.js](https://p5js.org).
+
+Thank you to w3 schools: 
+
+https://www.w3schools.com/jsref/jsref_map.asp
+
+https://www.w3schools.com/js/js_json_intro.asp
+
+https://www.w3schools.com/js/js_classes.asp
+
+https://www.w3schools.com/js/js_debugging.asp
+
+https://www.w3schools.com/js/js_best_practices.asp
+
+https://www.w3schools.com/js/js_reserved.asp
+
+https://www.w3schools.com/js/js_es5.asp
+
+https://www.w3schools.com/js/js_es6.asp
+
+https://www.w3schools.com/js/js_2022.asp#mark_class_fields
+
+https://www.w3schools.com/js/js_2020.asp
+
+https://w3schools.com/js/js_2019.asp
+
+https://www.w3schools.com/js/js_2018.asp
+
+https://www.w3schools.com/js/js_2017.asp
+
+https://www.w3schools.com/js/js_2016.asp
