@@ -27,7 +27,7 @@ Controls:
 
 This project uses [p5.js](https://p5js.org).
 
-Thank you to w3 schools: 
+Thank you to w3 schools for reference code: 
 
 https://www.w3schools.com/jsref/jsref_map.asp
 
@@ -56,3 +56,7 @@ https://www.w3schools.com/js/js_2018.asp
 https://www.w3schools.com/js/js_2017.asp
 
 https://www.w3schools.com/js/js_2016.asp
+
+Sound effects (some unused) from:
+https://www.videvo.net/royalty-free-sound-effects/twinkle/
+
